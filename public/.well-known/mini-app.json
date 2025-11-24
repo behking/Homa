@@ -3,6 +3,6 @@
   "name": "Homa Mini App",
   "description": "A Charity Game powered by Soneium Minato.",
   "icon": "/icon.png",
-  "url": "https://homa-xi.vercel.app",
+  "url": "https://homa-xi.vercel.app/game.html/",
   "version": "1.0.0"
 }
