@@ -1,0 +1,8 @@
+{
+  "id": "homa",
+  "name": "Homa Mini App",
+  "description": "A Charity Game powered by Soneium Minato.",
+  "icon": "/icon.png",
+  "url": "https://homa-xi.vercel.app",
+  "version": "1.0.0"
+}

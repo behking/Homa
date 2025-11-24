@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Homa - Build to Impact</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            background-color: #0d1117;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; font-family: 'Arial', sans-serif;
+            overflow: hidden; color: white; user-select: none;
+        }
+        #gameContainer {
+            position: relative; width: 100%; max-width: 400px; height: 600px;
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F7FA 100%);
+            overflow: hidden; border: 2px solid #333; border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        #projectStatus {
+            position: absolute; top: 0; left: 0; width: 100%;
+            background: rgba(0,0,0,0.6); color: #fff;
+            padding: 8px 0; text-align: center; font-size: 12px; z-index: 15;
+            border-bottom: 2px solid #FFD700;
+        }
+        #scoreBoard {
+            position: absolute; top: 40px; left: 20px;
+            font-size: 24px; font-weight: bold; color: #333; z-index: 10;
+        }
+        #startScreen, #gameOverScreen, #successScreen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: flex;
+            flex-direction: column; justify-content: center; align-items: center;
+            z-index: 20; text-align: center; backdrop-filter: blur(5px);
+        }
+        .panel {
+            background: white; color: #333; padding: 20px;
+            border-radius: 15px; width: 80%; max-width: 300px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: popIn 0.3s ease-out;
+        }
+        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        h1 { margin: 0 0 10px 0; color: #FFD700; text-shadow: 1px 1px 2px black; }
+        h2 { margin: 0 0 10px 0; color: #333; font-size: 22px; }
+        h3 { margin: 10px 0; color: #2E7D32; }
+        button.action-btn {
+            background: linear-gradient(45deg, #FF4500, #FF8C00);
+            border: none; padding: 12px 25px; color: white;
+            font-size: 18px; border-radius: 25px; cursor: pointer;
+            margin-top: 10px; width: 100%; font-weight: bold;
+            box-shadow: 0 4px #c0392b; transition: all 0.1s;
+        }
+        button.action-btn:active { transform: translateY(2px); box-shadow: 0 2px #c0392b; }
+        button.success-btn { background: linear-gradient(45deg, #27ae60, #2ecc71); box-shadow: 0 4px #1e8449; }
+        .donation-control { margin: 15px 0; text-align: center; }
+        input[type=range] { width: 100%; margin: 10px 0; }
+        .price-tag { background: #E8F5E9; color: #2E7D32; padding: 5px 10px; border-radius: 5px; font-weight: bold; display: block; margin-top: 5px;}
+        .hidden { display: none !important; }
+        #player {
+            position: absolute; width: 40px; height: 40px;
+            background-color: #FFD700; border-radius: 8px;
+            border: 3px solid #B8860B; bottom: 100px; left: 50px;
+        }
+        .obstacle {
+            position: absolute; width: 35px; background-color: #5D4037;
+            bottom: 100px; border-radius: 5px; border: 2px solid #3E2723;
+        }
+        #ground {
+            position: absolute; bottom: 0; width: 100%; height: 100px;
+            background-color: #4CAF50; border-top: 6px solid #2E7D32;
+        }
+    </style>
+</head>
+<body>
+
+<div id="gameContainer">
+    <div id="projectStatus">
+        🏗️ پروژه مدرسه: <b>فاز ۱ - فونداسیون</b><br>
+        پیشرفت بودجه: <span id="raisedFundsDisplay" style="color:#4CAF50">Loading...</span> / 0.5 ETH
+    </div>
+
+    <div id="scoreBoard">امتیاز: 0</div>
+    
+    <div id="startScreen">
+        <h1>HOMA RUNNER</h1>
+        <p style="color:#eee">بدو، بساز، تاثیر بگذار!</p>
+        <button class="action-btn" onclick="startGame(event)">شروع بازی</button>
+    </div>
+
+    <div id="gameOverScreen" class="hidden">
+        <div class="panel">
+            <h2>پایان بازی!</h2>
+            <div style="font-size: 14px; color: #555;">امتیاز شما (آجر):</div>
+            <div id="finalScoreDisplay" style="font-size: 30px; font-weight: bold; color: #d35400;">0</div>
+            <hr style="border: 1px solid #eee; margin: 15px 0;">
+            <div class="donation-control">
+                <label>ضریب دونیشن: <span id="multiplierValue" style="color:#2980b9; font-weight:bold;">1x</span></label>
+                <input type="range" id="multiplierSlider" min="1" max="100" value="1" oninput="updateDonationCalc()">
+                <div style="font-size: 12px; margin-top:5px;">امتیاز نهایی در لیدربورد:</div>
+                <div id="finalRankScore" style="font-size: 18px; font-weight: bold;">0</div>
+                <span class="price-tag">مبلغ پرداختی: <span id="ethCost">0.00001</span> ETH</span>
+            </div>
+            <button id="payBtn" class="action-btn" style="background: linear-gradient(45deg, #27ae60, #2ecc71);" onclick="processPayment()">
+                ❤️ پرداخت و ثبت
+            </button>
+            <button onclick="startGame(event)" style="background:none; border:none; color:#777; margin-top:10px; cursor:pointer; text-decoration:underline;">بازی مجدد (بدون ثبت)</button>
+        </div>
+    </div>
+
+    <div id="successScreen" class="hidden">
+        <div class="panel">
+            <div style="font-size: 50px;">🎉</div>
+            <h3>سپاسگزاریم!</h3>
+            <p style="font-size: 14px; color: #555;">کمک شما ثبت شد.</p>
+            <div style="background: #eee; padding: 10px; border-radius: 10px; margin: 10px 0;">
+                امتیاز ثبت شده: <b id="successScore">0</b>
+            </div>
+            <button class="action-btn success-btn" onclick="reloadGame()">ادامه</button>
+        </div>
+    </div>
+
+    <div id="player"></div>
+    <div id="ground"></div>
+</div>
+
+<script>
+    // --- SDK فارکستر برای رفع لودینگ ---
+    document.addEventListener("DOMContentLoaded", () => {
+        // شبیه‌سازی سیگنال آماده‌باش به فارکستر
+        setTimeout(() => {
+            console.log("Farcaster SDK Ready Signal Sent");
+            // در محیط واقعی، فریم‌ورک این کار را می‌کند اما اینجا دستی صدا میزنیم اگر در iframe باشد
+            if (window.parent) {
+                window.parent.postMessage({ type: "ready" }, "*");
+            }
+        }, 500);
+    });
+
+    const CONTRACT_ADDRESS = "0xabE3d632dcc93E5D077Fb176a18818867cB39428"; 
+    const BASE_PRICE = 0.00001; 
+    const CONTRACT_ABI = [
+        "function submitScore(uint256 score, uint256 multiplier) public payable",
+        "function getProjectStatus() public view returns (uint256, uint256, string, uint256)"
+    ];
+
+    // متغیرها
+    const player = document.getElementById('player');
+    const gameContainer = document.getElementById('gameContainer');
+    const scoreBoard = document.getElementById('scoreBoard');
+    const startScreen = document.getElementById('startScreen');
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    const successScreen = document.getElementById('successScreen');
+    const finalScoreDisplay = document.getElementById('finalScoreDisplay');
+    const multiplierSlider = document.getElementById('multiplierSlider');
+    const multiplierValue = document.getElementById('multiplierValue');
+    const finalRankScore = document.getElementById('finalRankScore');
+    const ethCost = document.getElementById('ethCost');
+    const payBtn = document.getElementById('payBtn');
+    const raisedFundsDisplay = document.getElementById('raisedFundsDisplay');
+    const successScore = document.getElementById('successScore');
+
+    let isGameRunning = false, score = 0, playerBottom = 100, jumpSpeed = 0;
+    let obstacles = [], gameLoopId, obstacleTimerId;
+
+    // بارگذاری
+    window.onload = async function() {
+        if (typeof window.ethereum !== 'undefined') {
+            try {
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+                const status = await contract.getProjectStatus();
+                raisedFundsDisplay.innerText = parseFloat(ethers.utils.formatEther(status[1])).toFixed(4) + " ETH";
+            } catch(e) { console.log(e); }
+        }
+    };
+
+    // کنترل‌ها
+    gameContainer.addEventListener('mousedown', jump);
+    gameContainer.addEventListener('touchstart', (e) => { e.preventDefault(); jump(); });
+    document.addEventListener('keydown', (e) => { if(e.code === 'Space') jump(); });
+
+    function startGame(e) {
+        if(e) e.stopPropagation();
+        clearInterval(gameLoopId); clearInterval(obstacleTimerId);
+        isGameRunning = true; score = 0; obstacles.forEach(ob => ob.element.remove()); obstacles = [];
+        startScreen.classList.add('hidden'); gameOverScreen.classList.add('hidden'); successScreen.classList.add('hidden');
+        playerBottom = 100; player.style.bottom = '100px'; scoreBoard.innerText = 'امتیاز: ' + score;
+        gameLoopId = setInterval(gameLoop, 20); obstacleTimerId = setInterval(createObstacle, 2000);
+    }
+    function jump() { if (isGameRunning && playerBottom <= 105) jumpSpeed = 14; }
+    function createObstacle() {
+        if (!isGameRunning) return;
+        const obstacle = document.createElement('div');
+        obstacle.classList.add('obstacle');
+        obstacle.style.left = '450px';
+        obstacle.style.height = (Math.random() > 0.5 ? 40 : 65) + 'px';
+        gameContainer.appendChild(obstacle);
+        obstacles.push({ element: obstacle, pos: 450, passed: false });
+    }
+    function gameLoop() {
+        if (playerBottom > 100 || jumpSpeed > 0) { playerBottom += jumpSpeed; jumpSpeed -= 0.8; }
+        else { jumpSpeed = 0; playerBottom = 100; }
+        player.style.bottom = playerBottom + 'px';
+        obstacles.forEach((ob, index) => {
+            ob.pos -= 6; ob.element.style.left = ob.pos + 'px';
+            if (ob.pos < -50) { ob.element.remove(); obstacles.splice(index, 1); }
+            if (ob.pos < 50 && !ob.passed) { score++; scoreBoard.innerText = 'امتیاز: ' + score; ob.passed = true; }
+            if (ob.pos > 10 && ob.pos < 85 && playerBottom < 100 + parseInt(ob.element.style.height) - 5) gameOver();
+        });
+    }
+    function gameOver() {
+        isGameRunning = false; clearInterval(gameLoopId); clearInterval(obstacleTimerId);
+        finalScoreDisplay.innerText = score; updateDonationCalc(); gameOverScreen.classList.remove('hidden');
+    }
+    function updateDonationCalc() {
+        const m = parseInt(multiplierSlider.value); multiplierValue.innerText = m + "x";
+        finalRankScore.innerText = score * m; ethCost.innerText = (score * m * BASE_PRICE).toFixed(5);
+    }
+    async function processPayment() {
+        if(score === 0) return alert("امتیاز صفر است!");
+        if (typeof window.ethereum === 'undefined') return alert("لطفاً متامسک نصب کنید!");
+        try {
+            payBtn.innerText = "⏳ ..."; payBtn.disabled = true;
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            const signer = provider.getSigner();
+            const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+            const m = parseInt(multiplierSlider.value);
+            const cost = ethers.utils.parseEther((score * m * BASE_PRICE).toFixed(5).toString());
+            const tx = await contract.submitScore(score, m, { value: cost });
+            await tx.wait();
+            showSuccessScreen(score * m);
+            payBtn.innerText = "❤️ پرداخت و ثبت"; payBtn.disabled = false;
+        } catch (e) { alert("خطا: " + e.message); payBtn.innerText = "❤️ پرداخت و ثبت"; payBtn.disabled = false; }
+    }
+    function showSuccessScreen(s) { gameOverScreen.classList.add('hidden'); successScore.innerText = s; successScreen.classList.remove('hidden'); }
+    function reloadGame() { location.reload(); }
+</script>
+</body>
+</html>
