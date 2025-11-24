@@ -29,6 +29,7 @@
         #scoreBoard {
             position: absolute; top: 40px; left: 20px;
             font-size: 24px; font-weight: bold; color: #333; z-index: 10;
+            text-shadow: 2px 2px 0px #fff;
         }
         #startScreen, #gameOverScreen, #successScreen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -44,8 +45,6 @@
         }
         @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         h1 { margin: 0 0 10px 0; color: #FFD700; text-shadow: 1px 1px 2px black; }
-        h2 { margin: 0 0 10px 0; color: #333; font-size: 22px; }
-        h3 { margin: 10px 0; color: #2E7D32; }
         button.action-btn {
             background: linear-gradient(45deg, #FF4500, #FF8C00);
             border: none; padding: 12px 25px; color: white;
@@ -59,19 +58,37 @@
         input[type=range] { width: 100%; margin: 10px 0; }
         .price-tag { background: #E8F5E9; color: #2E7D32; padding: 5px 10px; border-radius: 5px; font-weight: bold; display: block; margin-top: 5px;}
         .hidden { display: none !important; }
+
+        /* گرافیک جدید: استفاده از ایموجی به جای رنگ */
         #player {
             position: absolute; width: 40px; height: 40px;
-            background-color: #FFD700; border-radius: 8px;
-            border: 3px solid #B8860B; bottom: 100px; left: 50px;
+            bottom: 100px; left: 50px;
+            font-size: 35px; line-height: 40px; text-align: center;
+            /* حذف رنگ پس زمینه */
         }
         .obstacle {
-            position: absolute; width: 35px; background-color: #5D4037;
-            bottom: 100px; border-radius: 5px; border: 2px solid #3E2723;
+            position: absolute; width: 40px; bottom: 100px;
+            font-size: 35px; line-height: 40px; text-align: center;
         }
+        /* آیتم جدید: قلب شانسی */
+        .collectible {
+            position: absolute; width: 40px; height: 40px;
+            font-size: 30px; line-height: 40px; text-align: center;
+            animation: float 1s infinite alternate;
+        }
+        @keyframes float { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+
         #ground {
             position: absolute; bottom: 0; width: 100%; height: 100px;
             background-color: #4CAF50; border-top: 6px solid #2E7D32;
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 20px, #388E3C 20px, #388E3C 40px);
         }
+        /* ابرها برای پس زمینه */
+        .cloud {
+            position: absolute; color: rgba(255,255,255,0.6); font-size: 50px;
+            top: 50px; animation: moveClouds 10s linear infinite;
+        }
+        @keyframes moveClouds { from { left: 400px; } to { left: -100px; } }
     </style>
 </head>
 <body>
@@ -82,56 +99,56 @@
         پیشرفت بودجه: <span id="raisedFundsDisplay" style="color:#4CAF50">Loading...</span> / 0.5 ETH
     </div>
 
-    <div id="scoreBoard">امتیاز: 0</div>
+    <div class="cloud" style="top:30px; animation-duration: 15s;">☁️</div>
+    <div class="cloud" style="top:80px; animation-duration: 12s; animation-delay: 5s;">☁️</div>
+
+    <div id="scoreBoard">🧱 0 <span style="font-size:16px; margin-right:10px;">(❤️ 0)</span></div>
     
     <div id="startScreen">
         <h1>HOMA RUNNER</h1>
-        <p style="color:#eee">بدو، بساز، تاثیر بگذار!</p>
+        <p style="color:#333; font-weight:bold;">👷‍♂️ بدو و مدرسه بساز!</p>
         <button class="action-btn" onclick="startGame(event)">شروع بازی</button>
     </div>
 
     <div id="gameOverScreen" class="hidden">
         <div class="panel">
             <h2>پایان بازی!</h2>
-            <div style="font-size: 14px; color: #555;">امتیاز شما (آجر):</div>
-            <div id="finalScoreDisplay" style="font-size: 30px; font-weight: bold; color: #d35400;">0</div>
-            <hr style="border: 1px solid #eee; margin: 15px 0;">
+            <div style="display:flex; justify-content:space-around; margin-bottom:10px;">
+                <div>🧱 آجر: <b id="finalBricks">0</b></div>
+                <div>❤️ قلب: <b id="finalHearts">0</b></div>
+            </div>
+            
+            <hr style="border: 1px solid #eee; margin: 10px 0;">
             <div class="donation-control">
                 <label>ضریب دونیشن: <span id="multiplierValue" style="color:#2980b9; font-weight:bold;">1x</span></label>
                 <input type="range" id="multiplierSlider" min="1" max="100" value="1" oninput="updateDonationCalc()">
-                <div style="font-size: 12px; margin-top:5px;">امتیاز نهایی در لیدربورد:</div>
-                <div id="finalRankScore" style="font-size: 18px; font-weight: bold;">0</div>
-                <span class="price-tag">مبلغ پرداختی: <span id="ethCost">0.00001</span> ETH</span>
+                <div style="font-size: 12px; margin-top:5px;">امتیاز کل (آجر + قلب):</div>
+                <div id="finalRankScore" style="font-size: 22px; font-weight: bold; color:#d35400;">0</div>
+                <span class="price-tag">مبلغ: <span id="ethCost">0.00001</span> ETH</span>
             </div>
             <button id="payBtn" class="action-btn" style="background: linear-gradient(45deg, #27ae60, #2ecc71);" onclick="processPayment()">
-                ❤️ پرداخت و ثبت
+                ❤️ ثبت رکورد
             </button>
-            <button onclick="startGame(event)" style="background:none; border:none; color:#777; margin-top:10px; cursor:pointer; text-decoration:underline;">بازی مجدد (بدون ثبت)</button>
+            <button onclick="startGame(event)" style="background:none; border:none; color:#777; margin-top:10px; cursor:pointer; text-decoration:underline;">بازی مجدد</button>
         </div>
     </div>
 
     <div id="successScreen" class="hidden">
         <div class="panel">
             <div style="font-size: 50px;">🎉</div>
-            <h3>سپاسگزاریم!</h3>
-            <p style="font-size: 14px; color: #555;">کمک شما ثبت شد.</p>
-            <div style="background: #eee; padding: 10px; border-radius: 10px; margin: 10px 0;">
-                امتیاز ثبت شده: <b id="successScore">0</b>
-            </div>
+            <h3>تراکنش موفق!</h3>
+            <p style="font-size: 14px; color: #555;">شما یک قهرمان واقعی هستید.</p>
             <button class="action-btn success-btn" onclick="reloadGame()">ادامه</button>
         </div>
     </div>
 
-    <div id="player"></div>
+    <div id="player">👷‍♂️</div>
     <div id="ground"></div>
 </div>
 
 <script type="module">
     import sdk from 'https://esm.sh/@farcaster/frame-sdk';
-
-    // وقتی صفحه کاملا لود شد، به فارکستر خبر بده
     sdk.actions.ready();
-    console.log("Farcaster SDK Ready Called ✅");
 </script>
 
 <script>
@@ -142,26 +159,32 @@
         "function getProjectStatus() public view returns (uint256, uint256, string, uint256)"
     ];
 
-    // متغیرها
     const player = document.getElementById('player');
     const gameContainer = document.getElementById('gameContainer');
     const scoreBoard = document.getElementById('scoreBoard');
     const startScreen = document.getElementById('startScreen');
     const gameOverScreen = document.getElementById('gameOverScreen');
     const successScreen = document.getElementById('successScreen');
-    const finalScoreDisplay = document.getElementById('finalScoreDisplay');
     const multiplierSlider = document.getElementById('multiplierSlider');
     const multiplierValue = document.getElementById('multiplierValue');
     const finalRankScore = document.getElementById('finalRankScore');
     const ethCost = document.getElementById('ethCost');
     const payBtn = document.getElementById('payBtn');
     const raisedFundsDisplay = document.getElementById('raisedFundsDisplay');
-    const successScore = document.getElementById('successScore');
+    const finalBricks = document.getElementById('finalBricks');
+    const finalHearts = document.getElementById('finalHearts');
 
-    let isGameRunning = false, score = 0, playerBottom = 100, jumpSpeed = 0;
-    let obstacles = [], gameLoopId, obstacleTimerId;
+    let isGameRunning = false;
+    let bricks = 0; // امتیاز مسافت
+    let hearts = 0; // امتیاز قلب‌های جمع شده
+    let totalScore = 0; // جمع کل
 
-    // بارگذاری اطلاعات بلاکچین
+    let playerBottom = 100;
+    let jumpSpeed = 0;
+    let obstacles = [];
+    let collectibles = []; // آرایه آیتم‌های جایزه
+    let gameLoopId, spawnerId;
+
     window.onload = async function() {
         if (typeof window.ethereum !== 'undefined') {
             try {
@@ -169,54 +192,134 @@
                 const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
                 const status = await contract.getProjectStatus();
                 raisedFundsDisplay.innerText = parseFloat(ethers.utils.formatEther(status[1])).toFixed(4) + " ETH";
-            } catch(e) { console.log(e); }
+            } catch(e) {}
         }
     };
 
-    // کنترل‌ها
     gameContainer.addEventListener('mousedown', jump);
     gameContainer.addEventListener('touchstart', (e) => { e.preventDefault(); jump(); });
     document.addEventListener('keydown', (e) => { if(e.code === 'Space') jump(); });
 
     function startGame(e) {
         if(e) e.stopPropagation();
-        clearInterval(gameLoopId); clearInterval(obstacleTimerId);
-        isGameRunning = true; score = 0; obstacles.forEach(ob => ob.element.remove()); obstacles = [];
+        clearInterval(gameLoopId); clearInterval(spawnerId);
+        isGameRunning = true; 
+        bricks = 0; hearts = 0;
+        
+        // پاکسازی
+        obstacles.forEach(ob => ob.element.remove()); obstacles = [];
+        collectibles.forEach(c => c.element.remove()); collectibles = [];
+        
         startScreen.classList.add('hidden'); gameOverScreen.classList.add('hidden'); successScreen.classList.add('hidden');
-        playerBottom = 100; player.style.bottom = '100px'; scoreBoard.innerText = 'امتیاز: ' + score;
-        gameLoopId = setInterval(gameLoop, 20); obstacleTimerId = setInterval(createObstacle, 2000);
+        playerBottom = 100; player.style.bottom = '100px'; 
+        updateScoreBoard();
+        
+        gameLoopId = setInterval(gameLoop, 20); 
+        spawnerId = setInterval(spawnManager, 1500); // مدیریت تولید موانع و جوایز
     }
-    function jump() { if (isGameRunning && playerBottom <= 105) jumpSpeed = 14; }
-    function createObstacle() {
+
+    function jump() { if (isGameRunning && playerBottom <= 105) jumpSpeed = 15; }
+
+    // مدیریت تولید تصادفی (مانع یا جایزه)
+    function spawnManager() {
         if (!isGameRunning) return;
+        const rand = Math.random();
+        
+        // 60% احتمال مانع، 30% احتمال جایزه، 10% خالی
+        if (rand < 0.6) {
+            createObstacle();
+        } else if (rand < 0.9) {
+            createCollectible();
+        }
+    }
+
+    function createObstacle() {
         const obstacle = document.createElement('div');
         obstacle.classList.add('obstacle');
+        obstacle.innerText = Math.random() > 0.5 ? '🧱' : '🪨'; // آجر یا سنگ
         obstacle.style.left = '450px';
-        obstacle.style.height = (Math.random() > 0.5 ? 40 : 65) + 'px';
         gameContainer.appendChild(obstacle);
         obstacles.push({ element: obstacle, pos: 450, passed: false });
     }
+
+    function createCollectible() {
+        const item = document.createElement('div');
+        item.classList.add('collectible');
+        item.innerText = '❤️';
+        item.style.left = '450px';
+        // ارتفاع تصادفی (پایین یا بالا که نیاز به پرش باشد)
+        const height = Math.random() > 0.5 ? 120 : 180; 
+        item.style.bottom = height + 'px';
+        gameContainer.appendChild(item);
+        collectibles.push({ element: item, pos: 450, bottom: height });
+    }
+
     function gameLoop() {
+        // فیزیک پرش
         if (playerBottom > 100 || jumpSpeed > 0) { playerBottom += jumpSpeed; jumpSpeed -= 0.8; }
         else { jumpSpeed = 0; playerBottom = 100; }
         player.style.bottom = playerBottom + 'px';
+
+        // حرکت موانع
         obstacles.forEach((ob, index) => {
             ob.pos -= 6; ob.element.style.left = ob.pos + 'px';
+            
             if (ob.pos < -50) { ob.element.remove(); obstacles.splice(index, 1); }
-            if (ob.pos < 50 && !ob.passed) { score++; scoreBoard.innerText = 'امتیاز: ' + score; ob.passed = true; }
-            if (ob.pos > 10 && ob.pos < 85 && playerBottom < 100 + parseInt(ob.element.style.height) - 5) gameOver();
+            
+            // امتیاز عبور از مانع
+            if (ob.pos < 50 && !ob.passed) { 
+                bricks++; updateScoreBoard(); ob.passed = true; 
+            }
+            
+            // برخورد با مانع
+            if (ob.pos > 20 && ob.pos < 80 && playerBottom < 135) {
+                gameOver();
+            }
+        });
+
+        // حرکت جوایز (قلب‌ها)
+        collectibles.forEach((c, index) => {
+            c.pos -= 6; c.element.style.left = c.pos + 'px';
+            
+            if (c.pos < -50) { c.element.remove(); collectibles.splice(index, 1); }
+
+            // گرفتن قلب (Collision Detection)
+            // شرط: افقی نزدیک باشد + عمودی بازیکن به ارتفاع قلب رسیده باشد
+            if (c.pos > 20 && c.pos < 80 && 
+                playerBottom + 40 >= c.bottom && playerBottom <= c.bottom + 40) {
+                
+                hearts += 5; // هر قلب 5 امتیاز
+                c.element.innerText = "✨"; // افکت گرفتن
+                setTimeout(() => c.element.remove(), 200);
+                collectibles.splice(index, 1);
+                updateScoreBoard();
+            }
         });
     }
-    function gameOver() {
-        isGameRunning = false; clearInterval(gameLoopId); clearInterval(obstacleTimerId);
-        finalScoreDisplay.innerText = score; updateDonationCalc(); gameOverScreen.classList.remove('hidden');
+
+    function updateScoreBoard() {
+        scoreBoard.innerHTML = `🧱 ${bricks} <span style="font-size:16px; margin-right:10px;">(❤️ ${hearts})</span>`;
     }
+
+    function gameOver() {
+        isGameRunning = false; clearInterval(gameLoopId); clearInterval(spawnerId);
+        
+        totalScore = bricks + hearts;
+        finalBricks.innerText = bricks;
+        finalHearts.innerText = hearts;
+        
+        updateDonationCalc(); 
+        gameOverScreen.classList.remove('hidden');
+    }
+
     function updateDonationCalc() {
         const m = parseInt(multiplierSlider.value); multiplierValue.innerText = m + "x";
-        finalRankScore.innerText = score * m; ethCost.innerText = (score * m * BASE_PRICE).toFixed(5);
+        finalRankScore.innerText = totalScore * m; 
+        ethCost.innerText = (totalScore * m * BASE_PRICE).toFixed(5);
     }
+
     async function processPayment() {
-        if(score === 0) return alert("امتیاز صفر است!");
+        if(totalScore === 0) return alert("امتیاز صفر است!");
         if (typeof window.ethereum === 'undefined') return alert("لطفاً متامسک نصب کنید!");
         try {
             payBtn.innerText = "⏳ ..."; payBtn.disabled = true;
@@ -225,15 +328,16 @@
             const signer = provider.getSigner();
             const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
             const m = parseInt(multiplierSlider.value);
-            const cost = ethers.utils.parseEther((score * m * BASE_PRICE).toFixed(5).toString());
-            const tx = await contract.submitScore(score, m, { value: cost });
+            const cost = ethers.utils.parseEther((totalScore * m * BASE_PRICE).toFixed(5).toString());
+            const tx = await contract.submitScore(totalScore, m, { value: cost });
             await tx.wait();
-            showSuccessScreen(score * m);
-            payBtn.innerText = "❤️ پرداخت و ثبت"; payBtn.disabled = false;
-        } catch (e) { alert("خطا: " + e.message); payBtn.innerText = "❤️ پرداخت و ثبت"; payBtn.disabled = false; }
+            successScreen.classList.remove('hidden'); gameOverScreen.classList.add('hidden');
+            payBtn.innerText = "❤️ ثبت رکورد"; payBtn.disabled = false;
+        } catch (e) { alert("خطا: " + e.message); payBtn.innerText = "❤️ ثبت رکورد"; payBtn.disabled = false; }
     }
-    function showSuccessScreen(s) { gameOverScreen.classList.add('hidden'); successScore.innerText = s; successScreen.classList.remove('hidden'); }
-    function reloadGame() { location.reload(); }
+    
+    // کدی برای رفرش صفحه که به عنوان تابع گلوبال تعریف شده تا در HTML کار کند
+    window.reloadGame = function() { location.reload(); }
 </script>
 </body>
 </html>
