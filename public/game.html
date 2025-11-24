@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Homa - Build to Impact</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    
     <style>
         body {
             margin: 0; padding: 0;
@@ -125,19 +126,15 @@
     <div id="ground"></div>
 </div>
 
-<script>
-    // --- SDK فارکستر برای رفع لودینگ ---
-    document.addEventListener("DOMContentLoaded", () => {
-        // شبیه‌سازی سیگنال آماده‌باش به فارکستر
-        setTimeout(() => {
-            console.log("Farcaster SDK Ready Signal Sent");
-            // در محیط واقعی، فریم‌ورک این کار را می‌کند اما اینجا دستی صدا میزنیم اگر در iframe باشد
-            if (window.parent) {
-                window.parent.postMessage({ type: "ready" }, "*");
-            }
-        }, 500);
-    });
+<script type="module">
+    import sdk from 'https://esm.sh/@farcaster/frame-sdk';
 
+    // وقتی صفحه کاملا لود شد، به فارکستر خبر بده
+    sdk.actions.ready();
+    console.log("Farcaster SDK Ready Called ✅");
+</script>
+
+<script>
     const CONTRACT_ADDRESS = "0xabE3d632dcc93E5D077Fb176a18818867cB39428"; 
     const BASE_PRICE = 0.00001; 
     const CONTRACT_ABI = [
@@ -164,7 +161,7 @@
     let isGameRunning = false, score = 0, playerBottom = 100, jumpSpeed = 0;
     let obstacles = [], gameLoopId, obstacleTimerId;
 
-    // بارگذاری
+    // بارگذاری اطلاعات بلاکچین
     window.onload = async function() {
         if (typeof window.ethereum !== 'undefined') {
             try {
