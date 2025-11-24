@@ -22,7 +22,7 @@
         }
         #projectStatus {
             position: absolute; top: 0; left: 0; width: 100%;
-            background: rgba(0,0,0,0.6); color: #fff;
+            background: rgba(0,0,0,0.7); color: #fff;
             padding: 8px 0; text-align: center; font-size: 12px; z-index: 15;
             border-bottom: 2px solid #FFD700;
         }
@@ -30,6 +30,7 @@
             position: absolute; top: 40px; left: 20px;
             font-size: 24px; font-weight: bold; color: #333; z-index: 10;
             text-shadow: 2px 2px 0px #fff;
+            background: rgba(255,255,255,0.5); padding: 5px 10px; border-radius: 10px;
         }
         #startScreen, #gameOverScreen, #successScreen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -44,7 +45,7 @@
             animation: popIn 0.3s ease-out;
         }
         @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        h1 { margin: 0 0 10px 0; color: #FFD700; text-shadow: 1px 1px 2px black; }
+        h1 { margin: 0 0 10px 0; color: #FFD700; text-shadow: 2px 2px 0px #000; font-size: 32px; }
         button.action-btn {
             background: linear-gradient(45deg, #FF4500, #FF8C00);
             border: none; padding: 12px 25px; color: white;
@@ -59,36 +60,42 @@
         .price-tag { background: #E8F5E9; color: #2E7D32; padding: 5px 10px; border-radius: 5px; font-weight: bold; display: block; margin-top: 5px;}
         .hidden { display: none !important; }
 
-        /* گرافیک جدید: استفاده از ایموجی به جای رنگ */
+        /* --- اصلاحات گرافیکی برای دیده شدن بهتر --- */
         #player {
             position: absolute; width: 40px; height: 40px;
             bottom: 100px; left: 50px;
-            font-size: 35px; line-height: 40px; text-align: center;
-            /* حذف رنگ پس زمینه */
+            font-size: 30px; line-height: 40px; text-align: center;
+            background: rgba(255, 255, 255, 0.8); /* پس زمینه سفید شفاف */
+            border: 2px solid #333; /* خط دور */
+            border-radius: 8px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
         }
         .obstacle {
-            position: absolute; width: 40px; bottom: 100px;
-            font-size: 35px; line-height: 40px; text-align: center;
+            position: absolute; width: 40px; height: 40px; bottom: 100px;
+            font-size: 30px; line-height: 40px; text-align: center;
+            background: #5D4037; /* پس زمینه قهوه‌ای برای دیده شدن آجر */
+            border: 2px solid #3E2723;
+            border-radius: 5px;
+            color: white; /* اگر ایموجی لود نشد */
         }
-        /* آیتم جدید: قلب شانسی */
         .collectible {
             position: absolute; width: 40px; height: 40px;
-            font-size: 30px; line-height: 40px; text-align: center;
-            animation: float 1s infinite alternate;
+            font-size: 35px; line-height: 40px; text-align: center;
+            animation: float 0.8s infinite alternate;
+            filter: drop-shadow(0 0 5px gold); /* درخشش دور قلب */
         }
-        @keyframes float { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+        @keyframes float { from { transform: translateY(0); } to { transform: translateY(-8px); } }
 
         #ground {
             position: absolute; bottom: 0; width: 100%; height: 100px;
             background-color: #4CAF50; border-top: 6px solid #2E7D32;
             background-image: repeating-linear-gradient(45deg, transparent, transparent 20px, #388E3C 20px, #388E3C 40px);
         }
-        /* ابرها برای پس زمینه */
         .cloud {
-            position: absolute; color: rgba(255,255,255,0.6); font-size: 50px;
-            top: 50px; animation: moveClouds 10s linear infinite;
+            position: absolute; color: rgba(255,255,255,0.8); font-size: 60px;
+            top: 50px; animation: moveClouds 15s linear infinite; opacity: 0.8;
         }
-        @keyframes moveClouds { from { left: 400px; } to { left: -100px; } }
+        @keyframes moveClouds { from { left: 450px; } to { left: -150px; } }
     </style>
 </head>
 <body>
@@ -99,14 +106,14 @@
         پیشرفت بودجه: <span id="raisedFundsDisplay" style="color:#4CAF50">Loading...</span> / 0.5 ETH
     </div>
 
-    <div class="cloud" style="top:30px; animation-duration: 15s;">☁️</div>
-    <div class="cloud" style="top:80px; animation-duration: 12s; animation-delay: 5s;">☁️</div>
+    <div class="cloud" style="top:20px; animation-duration: 18s;">☁️</div>
+    <div class="cloud" style="top:70px; animation-duration: 14s; animation-delay: 6s; font-size: 40px;">☁️</div>
 
     <div id="scoreBoard">🧱 0 <span style="font-size:16px; margin-right:10px;">(❤️ 0)</span></div>
     
     <div id="startScreen">
         <h1>HOMA RUNNER</h1>
-        <p style="color:#333; font-weight:bold;">👷‍♂️ بدو و مدرسه بساز!</p>
+        <p style="color:#eee; font-weight:bold; background:rgba(0,0,0,0.5); padding:5px 10px; border-radius:10px;">👷‍♂️ بدو و مدرسه بساز!</p>
         <button class="action-btn" onclick="startGame(event)">شروع بازی</button>
     </div>
 
@@ -137,7 +144,7 @@
         <div class="panel">
             <div style="font-size: 50px;">🎉</div>
             <h3>تراکنش موفق!</h3>
-            <p style="font-size: 14px; color: #555;">شما یک قهرمان واقعی هستید.</p>
+            <p style="font-size: 14px; color: #555;">کمک شما ثبت شد.</p>
             <button class="action-btn success-btn" onclick="reloadGame()">ادامه</button>
         </div>
     </div>
@@ -154,6 +161,11 @@
 <script>
     const CONTRACT_ADDRESS = "0xabE3d632dcc93E5D077Fb176a18818867cB39428"; 
     const BASE_PRICE = 0.00001; 
+    
+    // تنظیمات شبکه Soneium Minato
+    const SONEIUM_CHAIN_ID = '0x79A'; // 1946 به هگز
+    const SONEIUM_RPC_URL = 'https://rpc.minato.soneium.org/';
+    
     const CONTRACT_ABI = [
         "function submitScore(uint256 score, uint256 multiplier) public payable",
         "function getProjectStatus() public view returns (uint256, uint256, string, uint256)"
@@ -174,20 +186,44 @@
     const finalBricks = document.getElementById('finalBricks');
     const finalHearts = document.getElementById('finalHearts');
 
-    let isGameRunning = false;
-    let bricks = 0; // امتیاز مسافت
-    let hearts = 0; // امتیاز قلب‌های جمع شده
-    let totalScore = 0; // جمع کل
+    let isGameRunning = false, bricks = 0, hearts = 0, totalScore = 0;
+    let playerBottom = 100, jumpSpeed = 0, obstacles = [], collectibles = [], gameLoopId, spawnerId;
 
-    let playerBottom = 100;
-    let jumpSpeed = 0;
-    let obstacles = [];
-    let collectibles = []; // آرایه آیتم‌های جایزه
-    let gameLoopId, spawnerId;
+    // تابع تعویض شبکه (جدید)
+    async function switchToSoneium() {
+        if (typeof window.ethereum === 'undefined') return;
+        try {
+            await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: SONEIUM_CHAIN_ID }],
+            });
+        } catch (switchError) {
+            // اگر شبکه اضافه نشده بود، آن را اضافه کن
+            if (switchError.code === 4902) {
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [{
+                            chainId: SONEIUM_CHAIN_ID,
+                            chainName: 'Soneium Minato Testnet',
+                            rpcUrls: [SONEIUM_RPC_URL],
+                            nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+                            blockExplorerUrls: ['https://explorer-testnet.soneium.org/']
+                        }],
+                    });
+                } catch (addError) {
+                    console.error("Error adding chain:", addError);
+                }
+            } else {
+                console.error("Error switching chain:", switchError);
+            }
+        }
+    }
 
     window.onload = async function() {
         if (typeof window.ethereum !== 'undefined') {
             try {
+                // سعی کن شبکه را چک کنی اما اگر نشد مهم نیست، موقع پرداخت زور میکنیم
                 const provider = new ethers.providers.Web3Provider(window.ethereum);
                 const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
                 const status = await contract.getProjectStatus();
@@ -203,40 +239,29 @@
     function startGame(e) {
         if(e) e.stopPropagation();
         clearInterval(gameLoopId); clearInterval(spawnerId);
-        isGameRunning = true; 
-        bricks = 0; hearts = 0;
-        
-        // پاکسازی
+        isGameRunning = true; bricks = 0; hearts = 0;
         obstacles.forEach(ob => ob.element.remove()); obstacles = [];
         collectibles.forEach(c => c.element.remove()); collectibles = [];
-        
         startScreen.classList.add('hidden'); gameOverScreen.classList.add('hidden'); successScreen.classList.add('hidden');
         playerBottom = 100; player.style.bottom = '100px'; 
         updateScoreBoard();
-        
         gameLoopId = setInterval(gameLoop, 20); 
-        spawnerId = setInterval(spawnManager, 1500); // مدیریت تولید موانع و جوایز
+        spawnerId = setInterval(spawnManager, 1500);
     }
 
     function jump() { if (isGameRunning && playerBottom <= 105) jumpSpeed = 15; }
 
-    // مدیریت تولید تصادفی (مانع یا جایزه)
     function spawnManager() {
         if (!isGameRunning) return;
         const rand = Math.random();
-        
-        // 60% احتمال مانع، 30% احتمال جایزه، 10% خالی
-        if (rand < 0.6) {
-            createObstacle();
-        } else if (rand < 0.9) {
-            createCollectible();
-        }
+        if (rand < 0.6) createObstacle();
+        else if (rand < 0.9) createCollectible();
     }
 
     function createObstacle() {
         const obstacle = document.createElement('div');
         obstacle.classList.add('obstacle');
-        obstacle.innerText = Math.random() > 0.5 ? '🧱' : '🪨'; // آجر یا سنگ
+        obstacle.innerText = Math.random() > 0.5 ? '🧱' : '🪨';
         obstacle.style.left = '450px';
         gameContainer.appendChild(obstacle);
         obstacles.push({ element: obstacle, pos: 450, passed: false });
@@ -247,7 +272,6 @@
         item.classList.add('collectible');
         item.innerText = '❤️';
         item.style.left = '450px';
-        // ارتفاع تصادفی (پایین یا بالا که نیاز به پرش باشد)
         const height = Math.random() > 0.5 ? 120 : 180; 
         item.style.bottom = height + 'px';
         gameContainer.appendChild(item);
@@ -255,41 +279,22 @@
     }
 
     function gameLoop() {
-        // فیزیک پرش
         if (playerBottom > 100 || jumpSpeed > 0) { playerBottom += jumpSpeed; jumpSpeed -= 0.8; }
         else { jumpSpeed = 0; playerBottom = 100; }
         player.style.bottom = playerBottom + 'px';
 
-        // حرکت موانع
         obstacles.forEach((ob, index) => {
             ob.pos -= 6; ob.element.style.left = ob.pos + 'px';
-            
             if (ob.pos < -50) { ob.element.remove(); obstacles.splice(index, 1); }
-            
-            // امتیاز عبور از مانع
-            if (ob.pos < 50 && !ob.passed) { 
-                bricks++; updateScoreBoard(); ob.passed = true; 
-            }
-            
-            // برخورد با مانع
-            if (ob.pos > 20 && ob.pos < 80 && playerBottom < 135) {
-                gameOver();
-            }
+            if (ob.pos < 50 && !ob.passed) { bricks++; updateScoreBoard(); ob.passed = true; }
+            if (ob.pos > 20 && ob.pos < 80 && playerBottom < 135) gameOver();
         });
 
-        // حرکت جوایز (قلب‌ها)
         collectibles.forEach((c, index) => {
             c.pos -= 6; c.element.style.left = c.pos + 'px';
-            
             if (c.pos < -50) { c.element.remove(); collectibles.splice(index, 1); }
-
-            // گرفتن قلب (Collision Detection)
-            // شرط: افقی نزدیک باشد + عمودی بازیکن به ارتفاع قلب رسیده باشد
-            if (c.pos > 20 && c.pos < 80 && 
-                playerBottom + 40 >= c.bottom && playerBottom <= c.bottom + 40) {
-                
-                hearts += 5; // هر قلب 5 امتیاز
-                c.element.innerText = "✨"; // افکت گرفتن
+            if (c.pos > 20 && c.pos < 80 && playerBottom + 40 >= c.bottom && playerBottom <= c.bottom + 40) {
+                hearts += 5; c.element.innerText = "✨"; 
                 setTimeout(() => c.element.remove(), 200);
                 collectibles.splice(index, 1);
                 updateScoreBoard();
@@ -303,11 +308,8 @@
 
     function gameOver() {
         isGameRunning = false; clearInterval(gameLoopId); clearInterval(spawnerId);
-        
         totalScore = bricks + hearts;
-        finalBricks.innerText = bricks;
-        finalHearts.innerText = hearts;
-        
+        finalBricks.innerText = bricks; finalHearts.innerText = hearts;
         updateDonationCalc(); 
         gameOverScreen.classList.remove('hidden');
     }
@@ -320,9 +322,18 @@
 
     async function processPayment() {
         if(totalScore === 0) return alert("امتیاز صفر است!");
-        if (typeof window.ethereum === 'undefined') return alert("لطفاً متامسک نصب کنید!");
+        if (typeof window.ethereum === 'undefined') return alert("لطفاً کیف پول Web3 نصب کنید!");
+        
         try {
-            payBtn.innerText = "⏳ ..."; payBtn.disabled = true;
+            payBtn.innerText = "⏳ تغییر شبکه...";
+            payBtn.disabled = true;
+
+            // 1. درخواست تعویض شبکه به سونیوم
+            await switchToSoneium();
+
+            payBtn.innerText = "⏳ در حال پرداخت...";
+            
+            // 2. ادامه فرآیند پرداخت
             const provider = new ethers.providers.Web3Provider(window.ethereum);
             await provider.send("eth_requestAccounts", []);
             const signer = provider.getSigner();
@@ -331,12 +342,17 @@
             const cost = ethers.utils.parseEther((totalScore * m * BASE_PRICE).toFixed(5).toString());
             const tx = await contract.submitScore(totalScore, m, { value: cost });
             await tx.wait();
+            
             successScreen.classList.remove('hidden'); gameOverScreen.classList.add('hidden');
             payBtn.innerText = "❤️ ثبت رکورد"; payBtn.disabled = false;
-        } catch (e) { alert("خطا: " + e.message); payBtn.innerText = "❤️ ثبت رکورد"; payBtn.disabled = false; }
+        } catch (e) { 
+            console.error(e);
+            alert("خطا: " + e.message); 
+            payBtn.innerText = "❤️ ثبت رکورد"; 
+            payBtn.disabled = false; 
+        }
     }
     
-    // کدی برای رفرش صفحه که به عنوان تابع گلوبال تعریف شده تا در HTML کار کند
     window.reloadGame = function() { location.reload(); }
 </script>
 </body>
