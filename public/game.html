@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Homa - Build to Impact</title>
+    <title>Homa - Charity Lottery Run</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
@@ -16,131 +16,149 @@
         }
         #gameContainer {
             position: relative; width: 100%; max-width: 400px; height: 600px;
-            /* تصویر پس‌زمینه شما */
             background-image: url('Background.png');
-            background-size: cover;
-            background-position: center;
+            background-size: cover; background-position: center;
             overflow: hidden; border: 4px solid #333; border-radius: 10px;
             box-shadow: 0 0 30px rgba(0,0,0,0.7); image-rendering: pixelated;
+            transition: filter 2s ease;
         }
+        
+        /* UI Components */
         #projectStatus {
             position: absolute; top: 0; left: 0; width: 100%;
             background: rgba(108, 92, 231, 0.9); color: #fff;
-            padding: 8px 0; text-align: center; font-size: 16px; z-index: 15;
+            padding: 5px 0; text-align: center; font-size: 14px; z-index: 15;
             border-bottom: 3px solid #fab1a0;
         }
+        #lotteryPot {
+            position: absolute; top: 40px; right: 10px;
+            color: #ffd700; font-size: 20px; font-weight: bold; 
+            text-shadow: 2px 2px 0 #000; z-index: 10;
+        }
         #scoreBoard {
-            position: absolute; top: 50px; left: 20px;
-            font-size: 28px; font-weight: bold; color: #fff; z-index: 10;
+            position: absolute; top: 40px; left: 20px;
+            font-size: 24px; font-weight: bold; color: #fff; z-index: 10;
             text-shadow: 2px 2px 0 #6c5ce7;
         }
+        #levelDisplay {
+            position: absolute; top: 70px; left: 20px;
+            font-size: 18px; color: #fab1a0; font-weight: bold; 
+            text-shadow: 1px 1px 0 #000; z-index: 10;
+        }
+
+        /* Screens */
         #startScreen, #gameOverScreen, #successScreen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(45, 52, 54, 0.9); display: flex;
+            background: rgba(45, 52, 54, 0.95); display: flex;
             flex-direction: column; justify-content: center; align-items: center;
             z-index: 20; text-align: center; backdrop-filter: blur(5px);
         }
         .panel {
-            background: #dfe6e9; color: #2d3436; padding: 25px;
-            border: 4px solid #6c5ce7; width: 80%; max-width: 300px;
-            border-radius: 15px;
-            box-shadow: 8px 8px 0 rgba(0,0,0,0.3); animation: popIn 0.3s ease-out;
+            background: #dfe6e9; color: #2d3436; padding: 20px;
+            border: 4px solid #6c5ce7; width: 85%; max-width: 320px;
+            border-radius: 15px; box-shadow: 8px 8px 0 rgba(0,0,0,0.3); 
+            animation: popIn 0.3s ease-out;
         }
         @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        h1 { margin: 0 0 10px 0; color: #fab1a0; text-shadow: 3px 3px 0 #6c5ce7; font-size: 48px; }
+        
+        h1 { margin: 0 0 10px 0; color: #fab1a0; text-shadow: 3px 3px 0 #6c5ce7; font-size: 40px; }
+        
         button.action-btn {
-            background: #6c5ce7; border: 3px solid #fff; padding: 10px 25px; color: white;
-            font-size: 24px; cursor: pointer; margin-top: 15px; width: 100%; 
+            background: #6c5ce7; border: 3px solid #fff; padding: 10px 20px; color: white;
+            font-size: 22px; cursor: pointer; margin-top: 10px; width: 100%; 
             font-weight: bold; font-family: 'VT323', sans-serif; border-radius: 10px;
             box-shadow: 4px 4px 0 rgba(0,0,0,0.2); transition: all 0.05s;
         }
         button.action-btn:active { transform: translate(4px, 4px); box-shadow: 0 0 0 #000; }
+        
+        /* استایل دکمه کانکت متفاوت باشد */
+        #connectBtn { background: #8e44ad; border-color: #a29bfe; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
         .hidden { display: none !important; }
 
-        /* --- تنظیمات کاراکتر خرس --- */
+        /* Game Graphics */
         #player {
             position: absolute; width: 50px; height: 50px; bottom: 80px; left: 50px; z-index: 5;
             background-image: url('Teddy_Bear.png');
             background-repeat: no-repeat; background-size: contain;
-            /* انیمیشن بالا پایین پریدن برای القای دویدن */
-            animation: run-bob 0.2s infinite alternate;
+            animation: run-bob 0.2s infinite alternate; transition: transform 0.1s; 
         }
         .jump-anim { animation: jump-rotate 0.5s ease-out !important; }
-        @keyframes run-bob { from { transform: translateY(0); } to { transform: translateY(-3px); } }
-        @keyframes jump-rotate { 
-            0% { transform: translateY(0) rotate(0deg); } 
-            50% { transform: translateY(-20px) rotate(10deg); }
-            100% { transform: translateY(0) rotate(0deg); } 
-        }
-
-        /* --- تنظیمات موانع --- */
-        .obstacle {
-            position: absolute; width: 40px; height: 60px; bottom: 85px; z-index: 4;
-            background-repeat: no-repeat; background-size: contain;
-            /* عکس مانع در جاوااسکریپت ست می‌شود */
-        }
+        .fall-anim { transform: rotate(180deg) scale(0.5) !important; filter: sepia(1) hue-rotate(-50deg) saturate(5); transition: all 0.5s; }
         
+        @keyframes run-bob { from { transform: translateY(0); } to { transform: translateY(-3px); } }
+        @keyframes jump-rotate { 0% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(10deg); } 100% { transform: translateY(0) rotate(0deg); } }
+
+        .obstacle { position: absolute; width: 40px; height: 60px; z-index: 4; background-repeat: no-repeat; background-size: contain; }
+        .pit {
+            position: absolute; width: 80px; height: 90px; bottom: 0; z-index: 2;
+            background: linear-gradient(to top, #cf1020, #ff4500);
+            border-left: 5px solid #2d3436; border-right: 5px solid #2d3436;
+            overflow: hidden; box-shadow: inset 0 0 20px #500;
+        }
+        .pit::after {
+            content: ''; position: absolute; width: 100%; height: 100%;
+            background-image: radial-gradient(circle, rgba(255,255,0,0.4) 10%, transparent 20%);
+            background-size: 20px 20px; animation: lava-bubble 1s infinite linear;
+        }
+        @keyframes lava-bubble { from { background-position: 0 0; } to { background-position: 0 -20px; } }
         .collectible {
             position: absolute; width: 32px; height: 32px; z-index: 4;
             background-repeat: no-repeat; background-size: contain;
             animation: float 0.8s infinite alternate; filter: drop-shadow(0 0 5px gold);
         }
         @keyframes float { from { transform: translateY(0); } to { transform: translateY(-8px); } }
-
-        /* --- تنظیمات زمین --- */
         #ground {
             position: absolute; bottom: 0; width: 100%; height: 100px; z-index: 3;
             background-image: url('Foreground.png');
-            background-repeat: repeat-x; 
-            background-size: auto 100%;
+            background-repeat: repeat-x; background-size: auto 100%;
         }
+        .donation-control { margin: 10px 0; text-align: center; }
+        input[type=range] { width: 100%; margin: 5px 0; accent-color: #6c5ce7; }
         
-        .donation-control { margin: 15px 0; text-align: center; }
-        input[type=range] { width: 100%; margin: 10px 0; accent-color: #6c5ce7; }
+        #levelUpMsg {
+            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 60px; color: #fab1a0; font-weight: bold; 
+            text-shadow: 4px 4px 0 #6c5ce7; pointer-events: none; opacity: 0; z-index: 50;
+        }
+        .show-levelup { animation: floatUp 2s ease-out forwards; }
+        @keyframes floatUp { 0% { opacity: 0; transform: translate(-50%, -20%); } 20% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(-50%, -80%); } }
     </style>
 </head>
 <body>
 
 <div id="gameContainer">
-    <div id="projectStatus">
-        🏗️ پروژه مدرسه: <b>فاز ۱ - فونداسیون</b><br>
-        پیشرفت: <span id="raisedFundsDisplay" style="color:#55efc4">Loading...</span> / 0.5 ETH
-    </div>
-    
-    <div id="scoreBoard">💎 0 <span style="font-size:20px; margin-right:10px;">(❤️ 0)</span></div>
+    <div id="projectStatus">🏗️ School Project: <b>Phase 1</b> | Funds: <span id="raisedFundsDisplay" style="color:#55efc4">...</span></div>
+    <div id="lotteryPot">🏆 POT: ??? ETH</div>
+    <div id="levelUpMsg">LEVEL UP!</div>
+    <div id="scoreBoard">💎 0</div>
+    <div id="levelDisplay">LVL 1</div>
     
     <div id="startScreen">
-        <h1>HOMA RUNNER</h1>
-        <p style="color:#fff; font-size: 20px; text-shadow: 2px 2px 0 #000;">Pixel Art Edition</p>
-        <button class="action-btn" onclick="startGame(event)">START GAME</button>
+        <h1>HOMA LOTTERY</h1>
+        <p style="color:#fff; font-size: 18px;">Play, Donate, Win!</p>
+        
+        <button id="connectBtn" class="action-btn" onclick="connectWallet()">🔌 CONNECT WALLET</button>
+        <button id="startBtn" class="action-btn hidden" onclick="startGame(event)">▶ START GAME</button>
+        
+        <p style="font-size: 14px; margin-top:10px; color:#fab1a0;" id="savedLevelInfo">Waiting for connection...</p>
     </div>
 
     <div id="gameOverScreen" class="hidden">
         <div class="panel">
-            <h2>GAME OVER</h2>
-            <div style="display:flex; justify-content:space-around; font-size: 24px;">
-                <div>💎 <b id="finalBricks">0</b></div> <div>❤️ <b id="finalHearts">0</b></div>
-            </div>
-            <hr style="border: 2px solid #6c5ce7; margin: 10px 0;">
+            <h2 style="color:#d63031">GAME OVER</h2>
+            <div style="font-size: 20px;">Score: <b id="finalScore">0</b></div>
+            <hr style="border: 1px solid #6c5ce7; margin: 10px 0;">
+            <div style="font-size: 14px; color: #2d3436; margin-bottom:5px;">🎟️ Buy Lottery Ticket (Donate)</div>
             <div class="donation-control">
-                <label>ضریب دونیشن: <span id="multiplierValue" style="color:#d63031; font-weight:bold;">1x</span></label>
+                <label>Multiplier: <span id="multiplierValue" style="font-weight:bold; color:#d63031">1x</span></label>
                 <input type="range" id="multiplierSlider" min="1" max="100" value="1" oninput="updateDonationCalc()">
-                <div style="font-size: 14px; margin-top:5px;">امتیاز نهایی:</div>
-                <div id="finalRankScore" style="font-size: 28px; font-weight: bold; color:#d63031;">0</div>
-                <span style="font-size: 14px; color: #555;">مبلغ پرداختی (ETH):</span>
-                <div id="ethCost" style="font-weight:bold; color:#00b894;">0.00001</div>
+                <div style="font-size: 16px; color:#00b894; font-weight:bold; margin-top:5px;" id="ethCost">0.00001 ETH</div>
             </div>
-            <button id="payBtn" class="action-btn" style="background: #00b894;" onclick="processPayment()">PAY & RANK UP</button>
-            <button onclick="startGame(event)" style="background:none; border:none; color:#2d3436; margin-top:10px; cursor:pointer; text-decoration:underline; font-family: 'VT323'; font-size: 20px;">TRY AGAIN</button>
-        </div>
-    </div>
-
-    <div id="successScreen" class="hidden">
-        <div class="panel">
-            <div style="font-size: 50px;">🎉</div>
-            <h3>SUCCESS!</h3>
-            <p>تراکنش شما ثبت شد.</p>
-            <button class="action-btn" style="background: #00b894;" onclick="reloadGame()">CONTINUE</button>
+            <button id="payBtn" class="action-btn" style="background: #00b894;" onclick="processDonation()">DONATE & JOIN LOTTERY</button>
+            <div style="font-size:10px; color:#636e72; margin-top:5px;">30% to Prize Pool • 60% to Charity</div>
+            <button onclick="startGame(event)" style="background:none; border:none; margin-top:10px; cursor:pointer; text-decoration:underline;">RESTART</button>
         </div>
     </div>
 
@@ -154,76 +172,131 @@
 </script>
 
 <script>
-    // --- لیست فایل‌های موانع (باید دقیقا همین اسم‌ها آپلود شوند) ---
     const obstacleImages = ['Obstacle_1.png', 'Obstacle_2.png', 'Obstacle_3.png'];
-
-    const CONTRACT_ADDRESS = "0xabE3d632dcc93E5D077Fb176a18818867cB39428"; 
+    const CONTRACT_ADDRESS = "0x0B0D08BCd6fE53e91330d3F80A6C039Bb489058e"; 
     const BASE_PRICE = 0.00001; 
     const SONEIUM_CHAIN_ID = '0x79A';
     const SONEIUM_RPC_URL = 'https://rpc.minato.soneium.org/';
-    const CONTRACT_ABI = ["function submitScore(uint256 score, uint256 multiplier) public payable", "function getProjectStatus() public view returns (uint256, uint256, string, uint256)"];
+    
+    const CONTRACT_ABI = [
+        "function submitScoreAndDonate(uint256 _level) public payable",
+        "function getLotteryStatus() public view returns (uint256, uint256)"
+    ];
 
     const player = document.getElementById('player');
     const gameContainer = document.getElementById('gameContainer');
     const scoreBoard = document.getElementById('scoreBoard');
+    const levelDisplay = document.getElementById('levelDisplay');
+    const levelUpMsg = document.getElementById('levelUpMsg');
     const startScreen = document.getElementById('startScreen');
     const gameOverScreen = document.getElementById('gameOverScreen');
-    const successScreen = document.getElementById('successScreen');
-    const multiplierSlider = document.getElementById('multiplierSlider');
-    const multiplierValue = document.getElementById('multiplierValue');
-    const finalRankScore = document.getElementById('finalRankScore');
-    const ethCost = document.getElementById('ethCost');
+    const savedLevelInfo = document.getElementById('savedLevelInfo');
+    const lotteryPotDisplay = document.getElementById('lotteryPot');
     const payBtn = document.getElementById('payBtn');
-    const raisedFundsDisplay = document.getElementById('raisedFundsDisplay');
-    const finalBricks = document.getElementById('finalBricks');
-    const finalHearts = document.getElementById('finalHearts');
+    const connectBtn = document.getElementById('connectBtn');
+    const startBtn = document.getElementById('startBtn');
 
-    let isGameRunning = false, bricks = 0, hearts = 0, totalScore = 0;
-    let playerBottom = 80, jumpSpeed = 0, obstacles = [], collectibles = [], gameLoopId, spawnerId;
+    let isGameRunning = false, bricks = 0, currentLevel = 1, savedLevel = 1;
+    let playerBottom = 80, jumpSpeed = 0, obstacles = [], pits = [], collectibles = [], gameLoopId, spawnerId;
+    let gameSpeed = 6;
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+        if(type==='jump'){ osc.frequency.setValueAtTime(150, now); osc.frequency.linearRampToValueAtTime(300, now+0.1); gainNode.gain.setValueAtTime(0.1, now); gainNode.gain.linearRampToValueAtTime(0, now+0.1); osc.start(now); osc.stop(now+0.1); }
+        if(type==='collect'){ osc.type='sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.setValueAtTime(800, now+0.1); gainNode.gain.setValueAtTime(0.1, now); gainNode.gain.linearRampToValueAtTime(0, now+0.2); osc.start(now); osc.stop(now+0.2); }
+        if(type==='die'){ osc.type='sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.linearRampToValueAtTime(50, now+0.4); gainNode.gain.setValueAtTime(0.2, now); gainNode.gain.linearRampToValueAtTime(0, now+0.4); osc.start(now); osc.stop(now+0.4); }
+        if(type==='levelup'){ osc.type='triangle'; osc.frequency.setValueAtTime(300, now); osc.frequency.linearRampToValueAtTime(600, now+0.2); gainNode.gain.setValueAtTime(0.1, now); gainNode.gain.linearRampToValueAtTime(0, now+0.4); osc.start(now); osc.stop(now+0.4); }
+    }
 
     async function switchToSoneium() {
         if (typeof window.ethereum === 'undefined') return;
         try { await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: SONEIUM_CHAIN_ID }], }); } 
         catch (e) {
             if (e.code === 4902) {
-                try { await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: SONEIUM_CHAIN_ID, chainName: 'Soneium Minato Testnet', rpcUrls: [SONEIUM_RPC_URL], nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, blockExplorerUrls: ['https://explorer-testnet.soneium.org/'] }], }); } catch (ee) {}
+                try { await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: SONEIUM_CHAIN_ID, chainName: 'Soneium Minato Testnet', rpcUrls: ['https://rpc.minato.soneium.org/'], nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, blockExplorerUrls: ['https://explorer-testnet.soneium.org/'] }], }); } catch (ee) {}
             }
         }
     }
 
+    // --- تابع اتصال دستی ولت (Connect Wallet) ---
+    async function connectWallet() {
+        if (typeof window.ethereum === 'undefined') return alert("Please install MetaMask/Rabby!");
+        try {
+            connectBtn.innerText = "⏳ Connecting...";
+            await switchToSoneium();
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            await provider.send("eth_requestAccounts", []); // درخواست اتصال
+            await loadContractData(provider);
+        } catch(e) {
+            console.error(e);
+            connectBtn.innerText = "❌ Retry Connect";
+        }
+    }
+
+    // --- بارگذاری اطلاعات از کانترکت ---
+    async function loadContractData(provider) {
+        try {
+            const signer = provider.getSigner();
+            const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+            
+            const status = await contract.getLotteryStatus();
+            const poolEth = ethers.utils.formatEther(status[0]);
+            lotteryPotDisplay.innerText = `🏆 POT: ${parseFloat(poolEth).toFixed(5)} ETH`;
+            
+            savedLevel = parseInt(status[1].toString());
+            if(savedLevel === 0) savedLevel = 1;
+            savedLevelInfo.innerText = "✅ Connected! Saved Level: " + savedLevel;
+            
+            // تغییر دکمه‌ها
+            connectBtn.classList.add('hidden');
+            startBtn.classList.remove('hidden');
+            
+        } catch(e) {
+            console.log("Data Load Error:", e);
+            savedLevelInfo.innerText = "Error reading data";
+        }
+    }
+
+    // چک کردن اتصال خودکار (اگر قبلا پرمیشن داده باشد)
     window.onload = async function() {
         if (typeof window.ethereum !== 'undefined') {
-            try {
-                const provider = new ethers.providers.Web3Provider(window.ethereum);
-                const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-                const status = await contract.getProjectStatus();
-                raisedFundsDisplay.innerText = parseFloat(ethers.utils.formatEther(status[1])).toFixed(4) + " ETH";
-            } catch(e) {}
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const accounts = await provider.listAccounts();
+            if (accounts.length > 0) {
+                await loadContractData(provider);
+            }
         }
     };
 
-    gameContainer.addEventListener('mousedown', jump);
-    gameContainer.addEventListener('touchstart', (e) => { e.preventDefault(); jump(); });
-    document.addEventListener('keydown', (e) => { if(e.code === 'Space') jump(); });
-
     function startGame(e) {
         if(e) e.stopPropagation();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
         clearInterval(gameLoopId); clearInterval(spawnerId);
-        isGameRunning = true; bricks = 0; hearts = 0;
+        isGameRunning = true; bricks = 0; 
+        
+        currentLevel = savedLevel > 1 ? savedLevel : 1;
+        gameSpeed = 6 + ((currentLevel - 1) * 0.5);
+        
+        updateLevelVisuals();
         obstacles.forEach(ob => ob.element.remove()); obstacles = [];
+        pits.forEach(p => p.element.remove()); pits = [];
         collectibles.forEach(c => c.element.remove()); collectibles = [];
-        startScreen.classList.add('hidden'); gameOverScreen.classList.add('hidden'); successScreen.classList.add('hidden');
+        startScreen.classList.add('hidden'); gameOverScreen.classList.add('hidden');
         playerBottom = 80; player.style.bottom = '80px'; 
-        player.classList.remove('jump-anim');
-        updateScoreBoard();
+        player.classList.remove('jump-anim', 'fall-anim'); player.style.opacity = 1;
+        updateUI();
         gameLoopId = setInterval(gameLoop, 20); 
-        spawnerId = setInterval(spawnManager, 1500);
+        spawnerId = setInterval(spawnManager, 1300);
     }
 
     function jump() { 
         if (isGameRunning && playerBottom <= 85) {
-            jumpSpeed = 16;
-            player.classList.add('jump-anim');
+            jumpSpeed = 17; player.classList.add('jump-anim'); playSound('jump');
             setTimeout(() => player.classList.remove('jump-anim'), 500);
         }
     }
@@ -231,90 +304,137 @@
     function spawnManager() {
         if (!isGameRunning) return;
         const rand = Math.random();
-        if (rand < 0.6) createObstacle();
-        else if (rand < 0.9) createCollectible();
+        let pitChance = 0.1 + (currentLevel * 0.02);
+        if (rand < pitChance) createPit();
+        else if (rand < 0.6) createObstacle();
+        else if (rand < 0.8) createCollectible();
+    }
+
+    function createPit() {
+        const pit = document.createElement('div');
+        pit.classList.add('pit'); pit.style.left = '450px';
+        gameContainer.appendChild(pit); pits.push({ element: pit, pos: 450 });
     }
 
     function createObstacle() {
         const obstacle = document.createElement('div');
         obstacle.classList.add('obstacle');
-        // انتخاب تصادفی یکی از ۳ عکس مانع شما
         const randomImg = obstacleImages[Math.floor(Math.random() * obstacleImages.length)];
         obstacle.style.backgroundImage = `url('${randomImg}')`;
         obstacle.style.left = '450px';
-        gameContainer.appendChild(obstacle);
-        obstacles.push({ element: obstacle, pos: 450, passed: false });
+        obstacle.style.bottom = (Math.random() > 0.85 ? 160 : 85) + 'px';
+        gameContainer.appendChild(obstacle); obstacles.push({ element: obstacle, pos: 450, passed: false });
     }
-
+    
     function createCollectible() {
         const item = document.createElement('div');
         item.classList.add('collectible');
-        // برای قلب فعلا از SVG استفاده میکنیم چون فایل قلب را نفرستادید، اما اگر دارید فایلش را بگذارید
         item.style.backgroundImage = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23d63031'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E")`;
-        item.style.left = '450px';
-        const height = Math.random() > 0.5 ? 120 : 180; 
-        item.style.bottom = height + 'px';
-        gameContainer.appendChild(item);
-        collectibles.push({ element: item, pos: 450, bottom: height });
+        item.style.left = '450px'; item.style.bottom = (Math.random() > 0.5 ? 120 : 180) + 'px';
+        gameContainer.appendChild(item); collectibles.push({ element: item, pos: 450 });
     }
 
     function gameLoop() {
-        if (playerBottom > 80 || jumpSpeed > 0) { playerBottom += jumpSpeed; jumpSpeed -= 0.8; }
-        else { jumpSpeed = 0; playerBottom = 80; }
+        if(isGameRunning) {
+            if (bricks > 0 && bricks % 20 === 0 && bricks > (currentLevel - savedLevel) * 20) { levelUp(); }
+        }
+        if (playerBottom > 80 || jumpSpeed > 0) { playerBottom += jumpSpeed; jumpSpeed -= 0.8; } 
+        else {
+            let inPit = false;
+            pits.forEach(p => { if (p.pos < 70 && p.pos > 20) inPit = true; });
+            if (!inPit) { jumpSpeed = 0; playerBottom = 80; }
+            else {
+                playerBottom -= 8;
+                if (isGameRunning) { player.classList.add('fall-anim'); playSound('die'); setTimeout(gameOver, 600); isGameRunning = false; }
+            }
+        }
         player.style.bottom = playerBottom + 'px';
 
-        obstacles.forEach((ob, index) => {
-            ob.pos -= 6; ob.element.style.left = ob.pos + 'px';
-            if (ob.pos < -50) { ob.element.remove(); obstacles.splice(index, 1); }
-            if (ob.pos < 50 && !ob.passed) { bricks++; updateScoreBoard(); ob.passed = true; }
-            if (ob.pos > 10 && ob.pos < 60 && playerBottom < 125) gameOver();
+        obstacles.forEach((ob, i) => {
+            ob.pos -= gameSpeed; ob.element.style.left = ob.pos + 'px';
+            if (ob.pos < -50) { ob.element.remove(); obstacles.splice(i, 1); }
+            if (ob.pos < 50 && !ob.passed) { bricks++; updateUI(); ob.passed = true; 
+                if(bricks % 20 === 0) levelUp(); 
+            }
+            if (isGameRunning && ob.pos > 10 && ob.pos < 60) {
+                let obH = parseInt(ob.element.style.bottom);
+                if ((obH < 100 && playerBottom < 125) || (obH > 100 && playerBottom > 100 && playerBottom < 200)) { playSound('die'); gameOver(); }
+            }
         });
 
-        collectibles.forEach((c, index) => {
-            c.pos -= 6; c.element.style.left = c.pos + 'px';
-            if (c.pos < -50) { c.element.remove(); collectibles.splice(index, 1); }
-            if (c.pos > 10 && c.pos < 70 && playerBottom + 40 >= c.bottom && playerBottom <= c.bottom + 40) {
-                hearts += 5; c.element.style.backgroundImage = "none"; c.element.innerText = "✨"; c.element.style.fontSize = "30px";
-                setTimeout(() => c.element.remove(), 200);
-                collectibles.splice(index, 1);
-                updateScoreBoard();
+        pits.forEach((p, i) => {
+            p.pos -= gameSpeed; p.element.style.left = p.pos + 'px';
+            if (p.pos < -100) { p.element.remove(); pits.splice(i, 1); }
+        });
+        
+        collectibles.forEach((c, i) => {
+            c.pos -= gameSpeed; c.element.style.left = c.pos + 'px';
+            if (c.pos < -50) { c.element.remove(); collectibles.splice(i, 1); }
+            let cH = parseInt(c.element.style.bottom);
+            if (isGameRunning && c.pos > 10 && c.pos < 70 && playerBottom + 40 >= cH && playerBottom <= cH + 40) {
+                playSound('collect'); c.element.remove(); collectibles.splice(i, 1);
+                bricks += 5; updateUI();
             }
         });
     }
 
-    function updateScoreBoard() { scoreBoard.innerHTML = `💎 ${bricks} <span style="font-size:20px; margin-right:10px;">(❤️ ${hearts})</span>`; }
+    function levelUp() {
+        currentLevel++; gameSpeed += 0.5; playSound('levelup');
+        levelUpMsg.classList.remove('show-levelup'); void levelUpMsg.offsetWidth; levelUpMsg.classList.add('show-levelup');
+        levelUpMsg.innerText = "LEVEL " + currentLevel; updateLevelVisuals(); updateUI();
+    }
+
+    function updateLevelVisuals() {
+        const hues = [0, 40, 180, 280]; 
+        const hue = hues[(currentLevel - 1) % 4];
+        gameContainer.style.filter = `hue-rotate(${hue}deg)`;
+    }
+
+    function updateUI() { scoreBoard.innerHTML = `💎 ${bricks}`; levelDisplay.innerHTML = `LVL ${currentLevel}`; }
 
     function gameOver() {
         isGameRunning = false; clearInterval(gameLoopId); clearInterval(spawnerId);
-        totalScore = bricks + hearts; finalBricks.innerText = bricks; finalHearts.innerText = hearts;
-        updateDonationCalc(); gameOverScreen.classList.remove('hidden');
+        document.getElementById('finalScore').innerText = bricks;
+        document.getElementById('multiplierSlider').value = 1; 
+        window.updateDonationCalc(); 
+        gameOverScreen.classList.remove('hidden');
     }
 
-    function updateDonationCalc() {
-        const m = parseInt(multiplierSlider.value); multiplierValue.innerText = m + "x";
-        finalRankScore.innerText = totalScore * m; ethCost.innerText = (totalScore * m * BASE_PRICE).toFixed(5);
-    }
-
-    async function processPayment() {
-        if(totalScore === 0) return alert("امتیاز صفر است!");
-        if (typeof window.ethereum === 'undefined') return alert("لطفاً کیف پول Web3 نصب کنید!");
+    async function processDonation() {
+        if (typeof window.ethereum === 'undefined') return alert("Please install MetaMask");
         try {
-            payBtn.innerText = "⏳ Network..."; payBtn.disabled = true;
-            await switchToSoneium();
-            payBtn.innerText = "⏳ Paying...";
+            payBtn.innerText = "⏳ Signing...";
             const provider = new ethers.providers.Web3Provider(window.ethereum);
-            await provider.send("eth_requestAccounts", []);
             const signer = provider.getSigner();
             const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-            const m = parseInt(multiplierSlider.value);
-            const cost = ethers.utils.parseEther((totalScore * m * BASE_PRICE).toFixed(5).toString());
-            const tx = await contract.submitScore(totalScore, m, { value: cost });
+            
+            const m = parseInt(document.getElementById('multiplierSlider').value);
+            const score = bricks > 0 ? bricks : 1; 
+            const costRaw = (score * m * BASE_PRICE).toFixed(5);
+            const costWei = ethers.utils.parseEther(costRaw.toString());
+
+            console.log("Sending:", costRaw, "ETH");
+            const tx = await contract.submitScoreAndDonate(currentLevel, { value: costWei });
+            payBtn.innerText = "⏳ Confirming...";
             await tx.wait();
-            successScreen.classList.remove('hidden'); gameOverScreen.classList.add('hidden');
-            payBtn.innerText = "PAY & RANK UP"; payBtn.disabled = false;
-        } catch (e) { console.error(e); alert("Error: " + e.message); payBtn.innerText = "PAY & RANK UP"; payBtn.disabled = false; }
+            alert(`✅ Ticket Confirmed!\n🏆 Lottery Pool Increased.\n💾 Level ${currentLevel} Saved.`);
+            location.reload();
+        } catch(e) { 
+            console.error(e); alert("Transaction Failed: " + e.message); payBtn.innerText = "DONATE & JOIN LOTTERY"; payBtn.disabled = false; 
+        }
     }
-    window.reloadGame = function() { location.reload(); }
+    
+    window.updateDonationCalc = function() {
+        const m = document.getElementById('multiplierSlider').value;
+        document.getElementById('multiplierValue').innerText = m + "x";
+        const score = bricks > 0 ? bricks : 1; 
+        document.getElementById('ethCost').innerText = (score * m * BASE_PRICE).toFixed(5) + " ETH";
+    }
+
+    gameContainer.addEventListener('mousedown', jump);
+    gameContainer.addEventListener('touchstart', (e) => { e.preventDefault(); jump(); });
+    document.addEventListener('keydown', (e) => { if(e.code === 'Space') jump(); });
+
 </script>
 </body>
 </html>
