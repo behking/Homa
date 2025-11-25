@@ -5,32 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Homa - Build to Impact</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-    
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
         body {
-            margin: 0; padding: 0;
-            background-color: #0d1117;
+            margin: 0; padding: 0; background-color: #222;
             display: flex; justify-content: center; align-items: center;
-            height: 100vh; font-family: 'Arial', sans-serif;
+            height: 100vh; font-family: 'VT323', 'Arial', sans-serif;
             overflow: hidden; color: white; user-select: none;
         }
         #gameContainer {
             position: relative; width: 100%; max-width: 400px; height: 600px;
-            background: linear-gradient(to bottom, #87CEEB 0%, #E0F7FA 100%);
-            overflow: hidden; border: 2px solid #333; border-radius: 15px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            background: linear-gradient(to bottom, #6eb1ff 0%, #a3d4ff 100%);
+            overflow: hidden; border: 4px solid #333; border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.7); image-rendering: pixelated;
         }
         #projectStatus {
             position: absolute; top: 0; left: 0; width: 100%;
-            background: rgba(0,0,0,0.7); color: #fff;
-            padding: 8px 0; text-align: center; font-size: 12px; z-index: 15;
-            border-bottom: 2px solid #FFD700;
+            background: rgba(0,0,0,0.8); color: #fff;
+            padding: 8px 0; text-align: center; font-size: 16px; z-index: 15;
+            border-bottom: 3px solid #FFD700;
         }
         #scoreBoard {
-            position: absolute; top: 40px; left: 20px;
-            font-size: 24px; font-weight: bold; color: #333; z-index: 10;
-            text-shadow: 2px 2px 0px #fff;
-            background: rgba(255,255,255,0.5); padding: 5px 10px; border-radius: 10px;
+            position: absolute; top: 50px; left: 20px;
+            font-size: 28px; font-weight: bold; color: #fff; z-index: 10;
+            text-shadow: 2px 2px 0 #000;
         }
         #startScreen, #gameOverScreen, #successScreen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -39,63 +37,55 @@
             z-index: 20; text-align: center; backdrop-filter: blur(5px);
         }
         .panel {
-            background: white; color: #333; padding: 20px;
-            border-radius: 15px; width: 80%; max-width: 300px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            animation: popIn 0.3s ease-out;
+            background: #f7e26b; color: #4a3314; padding: 25px;
+            border: 4px solid #4a3314; width: 80%; max-width: 300px;
+            box-shadow: 8px 8px 0 rgba(0,0,0,0.4); animation: popIn 0.3s ease-out;
         }
         @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        h1 { margin: 0 0 10px 0; color: #FFD700; text-shadow: 2px 2px 0px #000; font-size: 32px; }
+        h1 { margin: 0 0 10px 0; color: #d95763; text-shadow: 3px 3px 0 #4a3314; font-size: 48px; }
+        h2 { margin: 0 0 10px 0; font-size: 32px; }
         button.action-btn {
-            background: linear-gradient(45deg, #FF4500, #FF8C00);
-            border: none; padding: 12px 25px; color: white;
-            font-size: 18px; border-radius: 25px; cursor: pointer;
-            margin-top: 10px; width: 100%; font-weight: bold;
-            box-shadow: 0 4px #c0392b; transition: all 0.1s;
+            background: #ff7f00; border: 3px solid #000; padding: 10px 25px; color: white;
+            font-size: 24px; cursor: pointer; margin-top: 15px; width: 100%; 
+            font-weight: bold; font-family: 'VT323', sans-serif;
+            box-shadow: 4px 4px 0 #000; transition: all 0.05s;
         }
-        button.action-btn:active { transform: translateY(2px); box-shadow: 0 2px #c0392b; }
-        button.success-btn { background: linear-gradient(45deg, #27ae60, #2ecc71); box-shadow: 0 4px #1e8449; }
-        .donation-control { margin: 15px 0; text-align: center; }
-        input[type=range] { width: 100%; margin: 10px 0; }
-        .price-tag { background: #E8F5E9; color: #2E7D32; padding: 5px 10px; border-radius: 5px; font-weight: bold; display: block; margin-top: 5px;}
+        button.action-btn:active { transform: translate(4px, 4px); box-shadow: 0 0 0 #000; }
         .hidden { display: none !important; }
 
-        /* --- اصلاحات گرافیکی برای دیده شدن بهتر --- */
+        /* گرافیک‌های تولید شده توسط کد */
         #player {
-            position: absolute; width: 40px; height: 40px;
-            bottom: 100px; left: 50px;
-            font-size: 30px; line-height: 40px; text-align: center;
-            background: rgba(255, 255, 255, 0.8); /* پس زمینه سفید شفاف */
-            border: 2px solid #333; /* خط دور */
-            border-radius: 8px;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            position: absolute; width: 40px; height: 40px; bottom: 96px; left: 50px; z-index: 5;
+            background-repeat: no-repeat; background-size: contain;
+            /* انیمیشن بالا پایین پریدن برای القای دویدن */
+            animation: bob 0.2s infinite alternate;
         }
+        @keyframes bob { from { transform: translateY(0); } to { transform: translateY(-2px); } }
+        
         .obstacle {
-            position: absolute; width: 40px; height: 40px; bottom: 100px;
-            font-size: 30px; line-height: 40px; text-align: center;
-            background: #5D4037; /* پس زمینه قهوه‌ای برای دیده شدن آجر */
-            border: 2px solid #3E2723;
-            border-radius: 5px;
-            color: white; /* اگر ایموجی لود نشد */
+            position: absolute; width: 40px; height: 40px; bottom: 96px; z-index: 4;
+            background-repeat: no-repeat; background-size: contain;
         }
         .collectible {
-            position: absolute; width: 40px; height: 40px;
-            font-size: 35px; line-height: 40px; text-align: center;
-            animation: float 0.8s infinite alternate;
-            filter: drop-shadow(0 0 5px gold); /* درخشش دور قلب */
+            position: absolute; width: 32px; height: 32px; z-index: 4;
+            background-repeat: no-repeat; background-size: contain;
+            animation: float 0.8s infinite alternate; filter: drop-shadow(0 0 5px gold);
         }
         @keyframes float { from { transform: translateY(0); } to { transform: translateY(-8px); } }
 
         #ground {
-            position: absolute; bottom: 0; width: 100%; height: 100px;
-            background-color: #4CAF50; border-top: 6px solid #2E7D32;
-            background-image: repeating-linear-gradient(45deg, transparent, transparent 20px, #388E3C 20px, #388E3C 40px);
+            position: absolute; bottom: 0; width: 100%; height: 96px; z-index: 3;
+            background-repeat: repeat-x; border-top: 4px solid #4a7c28;
         }
         .cloud {
             position: absolute; color: rgba(255,255,255,0.8); font-size: 60px;
-            top: 50px; animation: moveClouds 15s linear infinite; opacity: 0.8;
+            top: 50px; animation: moveClouds 20s linear infinite;
         }
         @keyframes moveClouds { from { left: 450px; } to { left: -150px; } }
+        
+        .donation-control { margin: 15px 0; text-align: center; }
+        input[type=range] { width: 100%; margin: 10px 0; accent-color: #ff7f00; }
+        .price-tag { background: #fff; border: 2px solid #4a3314; color: #2E7D32; padding: 5px 10px; font-weight: bold; display: block; margin-top: 5px;}
     </style>
 </head>
 <body>
@@ -103,73 +93,88 @@
 <div id="gameContainer">
     <div id="projectStatus">
         🏗️ پروژه مدرسه: <b>فاز ۱ - فونداسیون</b><br>
-        پیشرفت بودجه: <span id="raisedFundsDisplay" style="color:#4CAF50">Loading...</span> / 0.5 ETH
+        پیشرفت: <span id="raisedFundsDisplay" style="color:#4CAF50">Loading...</span> / 0.5 ETH
     </div>
-
-    <div class="cloud" style="top:20px; animation-duration: 18s;">☁️</div>
-    <div class="cloud" style="top:70px; animation-duration: 14s; animation-delay: 6s; font-size: 40px;">☁️</div>
-
-    <div id="scoreBoard">🧱 0 <span style="font-size:16px; margin-right:10px;">(❤️ 0)</span></div>
+    <div class="cloud" style="top:20px; animation-duration: 25s;">☁️</div>
+    <div class="cloud" style="top:70px; animation-duration: 18s; animation-delay: 6s; font-size: 40px;">☁️</div>
+    <div id="scoreBoard">🧱 0 <span style="font-size:20px; margin-right:10px;">(❤️ 0)</span></div>
     
     <div id="startScreen">
         <h1>HOMA RUNNER</h1>
-        <p style="color:#eee; font-weight:bold; background:rgba(0,0,0,0.5); padding:5px 10px; border-radius:10px;">👷‍♂️ بدو و مدرسه بساز!</p>
-        <button class="action-btn" onclick="startGame(event)">شروع بازی</button>
+        <p style="color:#fff; font-size: 20px; text-shadow: 2px 2px 0 #000;">نسخه آلفا - گرافیک خودکار</p>
+        <button class="action-btn" onclick="startGame(event)">START GAME</button>
     </div>
 
     <div id="gameOverScreen" class="hidden">
         <div class="panel">
-            <h2>پایان بازی!</h2>
-            <div style="display:flex; justify-content:space-around; margin-bottom:10px;">
-                <div>🧱 آجر: <b id="finalBricks">0</b></div>
-                <div>❤️ قلب: <b id="finalHearts">0</b></div>
+            <h2>GAME OVER</h2>
+            <div style="display:flex; justify-content:space-around; font-size: 24px;">
+                <div>🧱 <b id="finalBricks">0</b></div> <div>❤️ <b id="finalHearts">0</b></div>
             </div>
-            
-            <hr style="border: 1px solid #eee; margin: 10px 0;">
+            <hr style="border: 2px solid #4a3314; margin: 10px 0;">
             <div class="donation-control">
-                <label>ضریب دونیشن: <span id="multiplierValue" style="color:#2980b9; font-weight:bold;">1x</span></label>
+                <label>ضریب دونیشن: <span id="multiplierValue" style="color:#d95763; font-weight:bold;">1x</span></label>
                 <input type="range" id="multiplierSlider" min="1" max="100" value="1" oninput="updateDonationCalc()">
-                <div style="font-size: 12px; margin-top:5px;">امتیاز کل (آجر + قلب):</div>
-                <div id="finalRankScore" style="font-size: 22px; font-weight: bold; color:#d35400;">0</div>
+                <div style="font-size: 14px; margin-top:5px;">امتیاز نهایی:</div>
+                <div id="finalRankScore" style="font-size: 28px; font-weight: bold; color:#d95763;">0</div>
                 <span class="price-tag">مبلغ: <span id="ethCost">0.00001</span> ETH</span>
             </div>
-            <button id="payBtn" class="action-btn" style="background: linear-gradient(45deg, #27ae60, #2ecc71);" onclick="processPayment()">
-                ❤️ ثبت رکورد
-            </button>
-            <button onclick="startGame(event)" style="background:none; border:none; color:#777; margin-top:10px; cursor:pointer; text-decoration:underline;">بازی مجدد</button>
+            <button id="payBtn" class="action-btn" style="background: #2ecc71;" onclick="processPayment()">PAY & RANK UP</button>
+            <button onclick="startGame(event)" style="background:none; border:none; color:#4a3314; margin-top:10px; cursor:pointer; text-decoration:underline; font-family: 'VT323'; font-size: 20px;">TRY AGAIN</button>
         </div>
     </div>
 
     <div id="successScreen" class="hidden">
         <div class="panel">
             <div style="font-size: 50px;">🎉</div>
-            <h3>تراکنش موفق!</h3>
-            <p style="font-size: 14px; color: #555;">کمک شما ثبت شد.</p>
-            <button class="action-btn success-btn" onclick="reloadGame()">ادامه</button>
+            <h3>SUCCESS!</h3>
+            <p>تراکنش شما ثبت شد.</p>
+            <button class="action-btn" style="background: #2ecc71;" onclick="reloadGame()">CONTINUE</button>
         </div>
     </div>
 
-    <div id="player">👷‍♂️</div>
+    <div id="player"></div>
     <div id="ground"></div>
 </div>
 
 <script type="module">
     import sdk from 'https://esm.sh/@farcaster/frame-sdk';
-    sdk.actions.ready();
+    try { sdk.actions.ready(); } catch(e) { console.log("SDK Ready Error (Local):", e); }
 </script>
 
 <script>
+    // --- موتور تولید گرافیک خودکار (بدون نیاز به دانلود فایل) ---
+    function generateAssets() {
+        // 1. تولید زمین (آجر)
+        const canvasG = document.createElement('canvas'); canvasG.width = 32; canvasG.height = 32;
+        const ctxG = canvasG.getContext('2d');
+        ctxG.fillStyle = '#8B4513'; ctxG.fillRect(0,0,32,32); // قهوه‌ای
+        ctxG.fillStyle = '#A0522D'; ctxG.fillRect(2,2,28,28); // روشن‌تر
+        ctxG.fillStyle = '#5D4037'; ctxG.fillRect(0,0,32,2); ctxG.fillRect(0,0,2,32); // مرز
+        document.getElementById('ground').style.backgroundImage = `url(${canvasG.toDataURL()})`;
+        
+        // 2. تولید بازیکن (پیکسلی)
+        const canvasP = document.createElement('canvas'); canvasP.width = 40; canvasP.height = 40;
+        const ctxP = canvasP.getContext('2d');
+        // کلاه آبی
+        ctxP.fillStyle = '#e74c3c'; ctxP.fillRect(10, 10, 20, 20); // بدن قرمز
+        ctxP.fillStyle = '#3498db'; ctxP.fillRect(10, 5, 20, 8); // کلاه
+        ctxP.fillStyle = '#ffccaa'; ctxP.fillRect(12, 12, 14, 10); // صورت
+        ctxP.fillStyle = '#000'; ctxP.fillRect(20, 15, 2, 2); // چشم
+        document.getElementById('player').style.backgroundImage = `url(${canvasP.toDataURL()})`;
+
+        // 3. استایل موانع و قلب (در زمان تولید)
+        window.brickUrl = canvasG.toDataURL(); // ذخیره برای استفاده در موانع
+    }
+    // فراخوانی تولید گرافیک
+    generateAssets();
+
+    // --- تنظیمات بازی و بلاکچین ---
     const CONTRACT_ADDRESS = "0xabE3d632dcc93E5D077Fb176a18818867cB39428"; 
     const BASE_PRICE = 0.00001; 
-    
-    // تنظیمات شبکه Soneium Minato
-    const SONEIUM_CHAIN_ID = '0x79A'; // 1946 به هگز
+    const SONEIUM_CHAIN_ID = '0x79A';
     const SONEIUM_RPC_URL = 'https://rpc.minato.soneium.org/';
-    
-    const CONTRACT_ABI = [
-        "function submitScore(uint256 score, uint256 multiplier) public payable",
-        "function getProjectStatus() public view returns (uint256, uint256, string, uint256)"
-    ];
+    const CONTRACT_ABI = ["function submitScore(uint256 score, uint256 multiplier) public payable", "function getProjectStatus() public view returns (uint256, uint256, string, uint256)"];
 
     const player = document.getElementById('player');
     const gameContainer = document.getElementById('gameContainer');
@@ -187,35 +192,14 @@
     const finalHearts = document.getElementById('finalHearts');
 
     let isGameRunning = false, bricks = 0, hearts = 0, totalScore = 0;
-    let playerBottom = 100, jumpSpeed = 0, obstacles = [], collectibles = [], gameLoopId, spawnerId;
+    let playerBottom = 96, jumpSpeed = 0, obstacles = [], collectibles = [], gameLoopId, spawnerId;
 
-    // تابع تعویض شبکه (جدید)
     async function switchToSoneium() {
         if (typeof window.ethereum === 'undefined') return;
-        try {
-            await window.ethereum.request({
-                method: 'wallet_switchEthereumChain',
-                params: [{ chainId: SONEIUM_CHAIN_ID }],
-            });
-        } catch (switchError) {
-            // اگر شبکه اضافه نشده بود، آن را اضافه کن
-            if (switchError.code === 4902) {
-                try {
-                    await window.ethereum.request({
-                        method: 'wallet_addEthereumChain',
-                        params: [{
-                            chainId: SONEIUM_CHAIN_ID,
-                            chainName: 'Soneium Minato Testnet',
-                            rpcUrls: [SONEIUM_RPC_URL],
-                            nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-                            blockExplorerUrls: ['https://explorer-testnet.soneium.org/']
-                        }],
-                    });
-                } catch (addError) {
-                    console.error("Error adding chain:", addError);
-                }
-            } else {
-                console.error("Error switching chain:", switchError);
+        try { await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: SONEIUM_CHAIN_ID }], }); } 
+        catch (e) {
+            if (e.code === 4902) {
+                try { await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: SONEIUM_CHAIN_ID, chainName: 'Soneium Minato Testnet', rpcUrls: [SONEIUM_RPC_URL], nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, blockExplorerUrls: ['https://explorer-testnet.soneium.org/'] }], }); } catch (ee) {}
             }
         }
     }
@@ -223,7 +207,6 @@
     window.onload = async function() {
         if (typeof window.ethereum !== 'undefined') {
             try {
-                // سعی کن شبکه را چک کنی اما اگر نشد مهم نیست، موقع پرداخت زور میکنیم
                 const provider = new ethers.providers.Web3Provider(window.ethereum);
                 const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
                 const status = await contract.getProjectStatus();
@@ -243,13 +226,13 @@
         obstacles.forEach(ob => ob.element.remove()); obstacles = [];
         collectibles.forEach(c => c.element.remove()); collectibles = [];
         startScreen.classList.add('hidden'); gameOverScreen.classList.add('hidden'); successScreen.classList.add('hidden');
-        playerBottom = 100; player.style.bottom = '100px'; 
+        playerBottom = 96; player.style.bottom = '96px'; 
         updateScoreBoard();
         gameLoopId = setInterval(gameLoop, 20); 
         spawnerId = setInterval(spawnManager, 1500);
     }
 
-    function jump() { if (isGameRunning && playerBottom <= 105) jumpSpeed = 15; }
+    function jump() { if (isGameRunning && playerBottom <= 100) jumpSpeed = 15; }
 
     function spawnManager() {
         if (!isGameRunning) return;
@@ -261,8 +244,9 @@
     function createObstacle() {
         const obstacle = document.createElement('div');
         obstacle.classList.add('obstacle');
-        obstacle.innerText = Math.random() > 0.5 ? '🧱' : '🪨';
         obstacle.style.left = '450px';
+        // استفاده از گرافیک تولید شده
+        obstacle.style.backgroundImage = `url(${window.brickUrl})`;
         gameContainer.appendChild(obstacle);
         obstacles.push({ element: obstacle, pos: 450, passed: false });
     }
@@ -270,7 +254,8 @@
     function createCollectible() {
         const item = document.createElement('div');
         item.classList.add('collectible');
-        item.innerText = '❤️';
+        // قلب را با SVG ساده می‌سازیم که شفاف و زیبا باشد
+        item.style.backgroundImage = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23e74c3c'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E")`;
         item.style.left = '450px';
         const height = Math.random() > 0.5 ? 120 : 180; 
         item.style.bottom = height + 'px';
@@ -279,81 +264,4 @@
     }
 
     function gameLoop() {
-        if (playerBottom > 100 || jumpSpeed > 0) { playerBottom += jumpSpeed; jumpSpeed -= 0.8; }
-        else { jumpSpeed = 0; playerBottom = 100; }
-        player.style.bottom = playerBottom + 'px';
-
-        obstacles.forEach((ob, index) => {
-            ob.pos -= 6; ob.element.style.left = ob.pos + 'px';
-            if (ob.pos < -50) { ob.element.remove(); obstacles.splice(index, 1); }
-            if (ob.pos < 50 && !ob.passed) { bricks++; updateScoreBoard(); ob.passed = true; }
-            if (ob.pos > 20 && ob.pos < 80 && playerBottom < 135) gameOver();
-        });
-
-        collectibles.forEach((c, index) => {
-            c.pos -= 6; c.element.style.left = c.pos + 'px';
-            if (c.pos < -50) { c.element.remove(); collectibles.splice(index, 1); }
-            if (c.pos > 20 && c.pos < 80 && playerBottom + 40 >= c.bottom && playerBottom <= c.bottom + 40) {
-                hearts += 5; c.element.innerText = "✨"; 
-                setTimeout(() => c.element.remove(), 200);
-                collectibles.splice(index, 1);
-                updateScoreBoard();
-            }
-        });
-    }
-
-    function updateScoreBoard() {
-        scoreBoard.innerHTML = `🧱 ${bricks} <span style="font-size:16px; margin-right:10px;">(❤️ ${hearts})</span>`;
-    }
-
-    function gameOver() {
-        isGameRunning = false; clearInterval(gameLoopId); clearInterval(spawnerId);
-        totalScore = bricks + hearts;
-        finalBricks.innerText = bricks; finalHearts.innerText = hearts;
-        updateDonationCalc(); 
-        gameOverScreen.classList.remove('hidden');
-    }
-
-    function updateDonationCalc() {
-        const m = parseInt(multiplierSlider.value); multiplierValue.innerText = m + "x";
-        finalRankScore.innerText = totalScore * m; 
-        ethCost.innerText = (totalScore * m * BASE_PRICE).toFixed(5);
-    }
-
-    async function processPayment() {
-        if(totalScore === 0) return alert("امتیاز صفر است!");
-        if (typeof window.ethereum === 'undefined') return alert("لطفاً کیف پول Web3 نصب کنید!");
-        
-        try {
-            payBtn.innerText = "⏳ تغییر شبکه...";
-            payBtn.disabled = true;
-
-            // 1. درخواست تعویض شبکه به سونیوم
-            await switchToSoneium();
-
-            payBtn.innerText = "⏳ در حال پرداخت...";
-            
-            // 2. ادامه فرآیند پرداخت
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            await provider.send("eth_requestAccounts", []);
-            const signer = provider.getSigner();
-            const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-            const m = parseInt(multiplierSlider.value);
-            const cost = ethers.utils.parseEther((totalScore * m * BASE_PRICE).toFixed(5).toString());
-            const tx = await contract.submitScore(totalScore, m, { value: cost });
-            await tx.wait();
-            
-            successScreen.classList.remove('hidden'); gameOverScreen.classList.add('hidden');
-            payBtn.innerText = "❤️ ثبت رکورد"; payBtn.disabled = false;
-        } catch (e) { 
-            console.error(e);
-            alert("خطا: " + e.message); 
-            payBtn.innerText = "❤️ ثبت رکورد"; 
-            payBtn.disabled = false; 
-        }
-    }
-    
-    window.reloadGame = function() { location.reload(); }
-</script>
-</body>
-</html>
+        if (playerBottom > 96 || jumpSpeed > 0) { playerBottom += jumpSpeed; jumpSpeed -= 0.8
