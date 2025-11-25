@@ -264,4 +264,62 @@
     }
 
     function gameLoop() {
-        if (playerBottom > 96 || jumpSpeed > 0) { playerBottom += jumpSpeed; jumpSpeed -= 0.8
+        if (playerBottom > 96 || jumpSpeed > 0) { playerBottom += jumpSpeed; jumpSpeed -= 0.8; }
+        else { jumpSpeed = 0; playerBottom = 96; }
+        player.style.bottom = playerBottom + 'px';
+
+        obstacles.forEach((ob, index) => {
+            ob.pos -= 6; ob.element.style.left = ob.pos + 'px';
+            if (ob.pos < -50) { ob.element.remove(); obstacles.splice(index, 1); }
+            if (ob.pos < 50 && !ob.passed) { bricks++; updateScoreBoard(); ob.passed = true; }
+            if (ob.pos > 10 && ob.pos < 70 && playerBottom < 130) gameOver();
+        });
+
+        collectibles.forEach((c, index) => {
+            c.pos -= 6; c.element.style.left = c.pos + 'px';
+            if (c.pos < -50) { c.element.remove(); collectibles.splice(index, 1); }
+            if (c.pos > 10 && c.pos < 70 && playerBottom + 40 >= c.bottom && playerBottom <= c.bottom + 40) {
+                hearts += 5; c.element.style.backgroundImage = "none"; c.element.innerText = "✨"; c.element.style.fontSize = "30px";
+                setTimeout(() => c.element.remove(), 200);
+                collectibles.splice(index, 1);
+                updateScoreBoard();
+            }
+        });
+    }
+
+    function updateScoreBoard() { scoreBoard.innerHTML = `🧱 ${bricks} <span style="font-size:20px; margin-right:10px;">(❤️ ${hearts})</span>`; }
+
+    function gameOver() {
+        isGameRunning = false; clearInterval(gameLoopId); clearInterval(spawnerId);
+        totalScore = bricks + hearts; finalBricks.innerText = bricks; finalHearts.innerText = hearts;
+        updateDonationCalc(); gameOverScreen.classList.remove('hidden');
+    }
+
+    function updateDonationCalc() {
+        const m = parseInt(multiplierSlider.value); multiplierValue.innerText = m + "x";
+        finalRankScore.innerText = totalScore * m; ethCost.innerText = (totalScore * m * BASE_PRICE).toFixed(5);
+    }
+
+    async function processPayment() {
+        if(totalScore === 0) return alert("امتیاز صفر است!");
+        if (typeof window.ethereum === 'undefined') return alert("لطفاً کیف پول Web3 نصب کنید!");
+        try {
+            payBtn.innerText = "⏳ Network..."; payBtn.disabled = true;
+            await switchToSoneium();
+            payBtn.innerText = "⏳ Paying...";
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            const signer = provider.getSigner();
+            const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+            const m = parseInt(multiplierSlider.value);
+            const cost = ethers.utils.parseEther((totalScore * m * BASE_PRICE).toFixed(5).toString());
+            const tx = await contract.submitScore(totalScore, m, { value: cost });
+            await tx.wait();
+            successScreen.classList.remove('hidden'); gameOverScreen.classList.add('hidden');
+            payBtn.innerText = "PAY & RANK UP"; payBtn.disabled = false;
+        } catch (e) { console.error(e); alert("Error: " + e.message); payBtn.innerText = "PAY & RANK UP"; payBtn.disabled = false; }
+    }
+    window.reloadGame = function() { location.reload(); }
+</script>
+</body>
+</html>
