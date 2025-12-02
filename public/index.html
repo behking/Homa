@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Homa Ecosystem</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap');
+        
+        :root {
+            --bg-dark: #0f0f1a;
+            --primary: #7aa2f7;
+            --accent: #bb9af7;
+            --charity: #9ece6a;
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-dark);
+            color: #fff;
+            font-family: 'Vazirmatn', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background-image: radial-gradient(circle at 50% 0%, #24283b 0%, #0f0f1a 100%);
+        }
+
+        /* LOGO & HEADER */
+        .header { text-align: center; margin-bottom: 40px; animation: float 6s ease-in-out infinite; }
+        .logo-icon { font-size: 60px; display: block; margin-bottom: 10px; text-shadow: 0 0 20px var(--primary); }
+        h1 { margin: 0; font-size: 42px; font-weight: 900; letter-spacing: 2px; background: linear-gradient(to right, #7aa2f7, #bb9af7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        p.subtitle { color: #a9b1d6; font-size: 14px; margin-top: 5px; letter-spacing: 1px; opacity: 0.8; }
+
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+
+        /* GRID CONTAINER */
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            width: 90%; max-width: 360px;
+        }
+
+        /* CARDS */
+        .app-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex; align-items: center; gap: 20px;
+            cursor: pointer;
+            text-decoration: none; color: #fff;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            position: relative; overflow: hidden;
+        }
+
+        .app-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            background: rgba(255,255,255,0.1);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        /* GLOW EFFECT */
+        .app-card::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: 0.5s;
+        }
+        .app-card:hover::before { left: 100%; }
+
+        .card-icon {
+            width: 60px; height: 60px;
+            border-radius: 15px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 30px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .card-content h2 { margin: 0; font-size: 20px; font-weight: 700; }
+        .card-content span { font-size: 12px; opacity: 0.6; }
+        .arrow { margin-right: auto; opacity: 0.5; transition: 0.3s; font-size: 20px; }
+        .app-card:hover .arrow { opacity: 1; transform: translateX(-5px); color: var(--primary); }
+
+        /* FOOTER */
+        .footer {
+            margin-top: 50px; text-align: center;
+            font-size: 12px; color: #565f89;
+        }
+        .footer a { color: var(--primary); text-decoration: none; margin: 0 10px; transition: 0.2s; }
+        .footer a:hover { color: #fff; text-shadow: 0 0 10px var(--primary); }
+
+        /* RESPONSIVE */
+        @media (min-width: 768px) {
+            .grid-container { grid-template-columns: 1fr 1fr; max-width: 800px; }
+            .app-card.full-width { grid-column: 1 / -1; }
+        }
+    </style>
+</head>
+<body>
+
+   <div class="header">
+ 
+    <h1>HOMA</h1>
+    <p class="subtitle">GAMIFIED CHARITY PROTOCOL</p>
+</div>
+
+    <div class="grid-container">
+        
+        <a href="game.html" class="app-card">
+            <div class="card-icon" style="background: linear-gradient(135deg, #ff9f43, #ff6b6b);">🏃</div>
+            <div class="card-content">
+                <h2>Homa Runner</h2>
+                <span>بازی رانر بی‌پایان</span>
+            </div>
+            <div class="arrow">←</div>
+        </a>
+
+        <a href="snake.html" class="app-card">
+            <div class="card-icon" style="background: linear-gradient(135deg, #54a0ff, #00d2d3);">🐍</div>
+            <div class="card-content">
+                <h2>Neon Snake</h2>
+                <span>بازی کلاسیک مار</span>
+            </div>
+            <div class="arrow">←</div>
+        </a>
+
+        <a href="charity.html" class="app-card full-width" style="border-color: rgba(158, 206, 106, 0.3);">
+            <div class="card-icon" style="background: linear-gradient(135deg, #9ece6a, #2ecc71);">❤️</div>
+            <div class="card-content">
+                <h2 style="color:#9ece6a">Charity Portal</h2>
+                <span>شفافیت، لیدربورد و اهدای مستقیم</span>
+            </div>
+            <div class="arrow">←</div>
+        </a>
+
+    </div>
+
+    <div class="footer">
+        <p>Built on Soneium Minato 🔵</p>
+        <div>
+            <a href="#">Whitepaper</a> • 
+            <a href="#">GitHub</a> • 
+            <a href="#">Twitter</a>
+        </div>
+    </div>
+
+</body>
+</html>

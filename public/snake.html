@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Homa Snake - Final</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+        
+        body { margin: 0; padding: 0; background: #0f0f1a; color: #fff; font-family: 'VT323', monospace; overflow: hidden; touch-action: none; user-select: none; }
+        
+        #gameArea {
+            position: relative; width: 100vw; height: 100vh;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: radial-gradient(circle at center, #1a1b26 0%, #000 100%);
+        }
+        
+        canvas {
+            border: 2px solid #7aa2f7; border-radius: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 30px rgba(122, 162, 247, 0.2);
+        }
+        
+        /* HUD */
+        .hud { position: absolute; top: 15px; width: 90%; display: flex; justify-content: space-between; font-size: 24px; text-shadow: 0 0 10px rgba(255,255,255,0.5); z-index: 10; pointer-events: none; }
+        .score-val { color: #ffd700; font-weight: bold; font-size: 32px; }
+        .high-score { font-size: 16px; color: #565f89; }
+        
+        /* SETTINGS BTN */
+        #settingsBtn { position: absolute; top: 15px; left: 15px; font-size: 24px; cursor: pointer; z-index: 30; pointer-events: auto; background: rgba(255,255,255,0.1); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 1px solid rgba(255,255,255,0.2); }
+        
+        /* SCREENS */
+        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 15, 26, 0.98); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 50; backdrop-filter: blur(8px); }
+        .panel { background: #1a1b26; border: 2px solid #7aa2f7; padding: 20px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; box-shadow: 0 0 40px rgba(122, 162, 247, 0.4); }
+        
+        h1 { font-size: 45px; margin: 0 0 10px 0; color: #7aa2f7; text-shadow: 0 0 15px #7aa2f7; letter-spacing: 2px; }
+        
+        /* BUTTONS */
+        button { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 10px; font-family: 'VT323'; font-size: 20px; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
+        button:active { transform: scale(0.96); }
+        .btn-primary { background: #7aa2f7; color: #fff; }
+        .btn-green { background: #9ece6a; color: #1a1b26; }
+        .btn-danger { background: #f7768e; color: #fff; border: 1px solid #fff; } /* New danger style */
+        .btn-outline { background: transparent; border: 2px solid #565f89; color: #a9b1d6; }
+        .btn-mode { background: rgba(255, 159, 67, 0.2); border: 1px solid #ff9f43; color: #ff9f43; }
+        
+        select, input[type=range] { width: 100%; padding: 8px; margin: 8px 0; background: #24283b; border: 1px solid #565f89; color: #fff; border-radius: 8px; font-family: inherit; font-size: 16px; outline: none; }
+        
+        /* USER STATUS BOX */
+        .user-status-box { 
+            background: rgba(122, 162, 247, 0.15); border: 1px solid #7aa2f7; 
+            padding: 8px; border-radius: 10px; margin: 10px 0; 
+            display: flex; justify-content: space-between; align-items: center; 
+            font-family: 'VT323';
+        }
+        .user-stat-item { text-align: center; flex: 1; }
+        .user-stat-val { font-weight: bold; color: #fff; font-size: 20px; line-height: 1; }
+        .user-stat-lbl { font-size: 12px; opacity: 0.7; color: #a9b1d6; }
+
+        /* CONTROLS */
+        #dpad { position: absolute; bottom: 30px; width: 200px; height: 140px; z-index: 15; display: none; }
+        .d-btn { position: absolute; width: 60px; height: 60px; background: rgba(255,255,255,0.15); border-radius: 15px; display: flex; justify-content: center; align-items: center; font-size: 30px; user-select: none; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px); }
+        
+        .shake { animation: shake-anim 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake-anim { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        
+        .hidden { display: none !important; }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; font-size: 18px; color: #a9b1d6; }
+        .toggle-btn { width: 60px; padding: 5px; font-size: 14px; margin: 0; }
+    </style>
+</head>
+<body>
+
+<div id="settingsModal" class="screen hidden" style="z-index: 60;">
+    <div class="panel">
+        <h2 style="color:#fff">SETTINGS</h2>
+        <div class="setting-row"><span>Sound 🔊</span><button id="sndToggle" class="toggle-btn btn-green" onclick="toggleSound()">ON</button></div>
+        <div class="setting-row"><span>Vibrate 📳</span><button id="vibToggle" class="toggle-btn btn-green" onclick="toggleVib()">ON</button></div>
+        <button class="btn-outline" onclick="closeSettings()">CLOSE</button>
+    </div>
+</div>
+
+<div id="gameArea">
+    <div id="settingsBtn" onclick="openSettings()">⚙️</div>
+    <div class="hud" style="justify-content: flex-end;">
+        <div style="position:absolute; left:0; top:5px;">
+            <div style="font-size:20px; color:#7aa2f7;">HOMA SNAKE</div>
+            <div class="high-score">Best: <span id="highScoreVal">0</span></div>
+        </div>
+        <div style="text-align:right;">
+            <span style="font-size:14px; opacity:0.7;">SCORE</span><br>
+            <span class="score-val" id="scoreDisplay">0</span>
+        </div>
+    </div>
+    <canvas id="snakeCanvas"></canvas>
+    <div id="dpad">
+        <div class="d-btn" onclick="turn('UP')" style="top:0; left:70px;">▲</div>
+        <div class="d-btn" onclick="turn('DOWN')" style="bottom:0; left:70px;">▼</div>
+        <div class="d-btn" onclick="turn('LEFT')" style="bottom:0; left:0;">◀</div>
+        <div class="d-btn" onclick="turn('RIGHT')" style="bottom:0; right:0;">▶</div>
+    </div>
+</div>
+
+<div id="startScreen" class="screen">
+    <h1>NEON SNAKE</h1>
+    <button id="modeBtn" class="btn-mode" onclick="toggleMode()" style="margin-bottom:10px; border-radius:20px; font-size:16px; padding:8px 15px;">🚧 WALLS: ON</button>
+    <button id="mazeBtn" class="btn-mode" onclick="toggleMaze()" style="margin-bottom:20px; border-radius:20px; font-size:16px; padding:8px 15px;">🧱 Obstacles: OFF</button>
+    
+    <div style="display:flex; gap:15px; margin-bottom:25px; justify-content:center;">
+        <div style="text-align:center;">🍎<br><span style="font-size:12px; color:#f7768e">+10</span></div>
+        <div style="text-align:center;">💎<br><span style="font-size:12px; color:#7aa2f7">+50</span></div>
+        <div style="text-align:center;">⚡<br><span style="font-size:12px; color:#ffd700">+100</span></div>
+    </div>
+    
+    <button id="connectBtn" class="btn-primary" onclick="handleWallet()">🔌 CONNECT WALLET</button>
+    <button id="playBtn" class="btn-outline" onclick="startGame()">🎮 PLAY GUEST</button>
+    <p id="walletAddr" style="margin-top:15px; font-size:12px; color:#565f89;">Guest Mode</p>
+</div>
+
+<div id="gameOverScreen" class="screen hidden">
+    <div class="panel">
+        <h2 style="color:#f7768e">GAME OVER</h2>
+        <p style="font-size:24px; margin-bottom:15px;">Score: <span id="finalScore" style="color:#ffd700">0</span></p>
+        
+        <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:15px; margin:10px 0; text-align:left;">
+            
+            <div id="userStatusBox" class="user-status-box hidden">
+                <div class="user-stat-item">
+                    <div class="user-stat-val" id="userTickets">0</div>
+                    <div class="user-stat-lbl">Tickets</div>
+                </div>
+                <div class="user-stat-item" style="border-left:1px solid #555; border-right:1px solid #555;">
+                    <div class="user-stat-val" id="userCents">0¢</div>
+                    <div class="user-stat-lbl">Pot</div>
+                </div>
+                <div class="user-stat-item">
+                    <div class="user-stat-val" id="userNextTicket" style="color:#ffd700">100¢</div>
+                    <div class="user-stat-lbl" style="color:#ffd700">Next Ticket</div>
+                </div>
+            </div>
+
+            <label style="font-size:12px; color:#a9b1d6;">Select Project:</label>
+            <select id="projectSelect"><option>Loading Projects...</option></select>
+            
+            <div style="display:flex; justify-content:space-between; font-size:14px; margin-top:10px;">
+                <span>Donate:</span>
+                <span id="usdAmount" style="color:#ffd700">$1.00</span>
+            </div>
+            <input type="range" id="donationSlider" min="0.1" max="10" step="0.1" value="1" oninput="updateCost(this.value)">
+            <div style="font-size:10px; color:#9ece6a; text-align:right;" id="ethCost">... ETH</div>
+            <div style="font-size:10px; color:#f7768e; margin-top:5px; display:none;" id="accWarning">⚠️ Accumulates until $1</div>
+        </div>
+
+        <button id="payBtn" class="btn-green" onclick="donate()">💾 SAVE SCORE & DONATE</button>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-outline" onclick="restartGame()">🔄 REPLAY</button>
+            <button class="btn-outline" style="background:#f7768e; color:#fff; border:none;" onclick="location.reload()">EXIT</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- CONFIG ---
+    const CONTRACT_ADDRESS = "0xB53223EE5B4C269A87617C8Ac798FcB7e2FDB1FE"; 
+    const RPC_URL = "https://rpc.minato.soneium.org/";
+    const CHAIN_ID = '0x79A';
+    const ABI = [
+        "function donate(uint256, bool, string, uint256) public payable",
+        "function getProjectCount() public view returns (uint256)",
+        "function getProject(uint256) public view returns (string, address, uint256, uint256, bool, bool)",
+        "function getUserAccumulation(address) public view returns (uint256 cents, uint256 tickets)"
+    ];
+
+    // --- ENGINE ---
+    const canvas = document.getElementById('snakeCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    let gridSize = 25; 
+    let tileCountX, tileCountY;
+    let gameSpeed = 100; 
+    
+    let snake = [];
+    let velocity = { x: 0, y: 0 };
+    let nextVelocity = { x: 0, y: 0 };
+    let items = [];
+    let obstacles = [];
+    let particles = [];
+    let score = 0;
+    let highScore = localStorage.getItem('snake_highscore') || 0;
+    let gameLoopId;
+    let isRunning = false;
+    
+    // Settings
+    let wallCollision = true;
+    let mazeMode = false;
+    let soundEnabled = true;
+    let vibrationEnabled = true;
+
+    let provider, signer, contract, userAddress;
+    let ethPrice = 3000;
+    let userCurrentCents = 0;
+
+    window.onload = () => {
+        resize();
+        window.addEventListener('resize', resize);
+        fetchPrice();
+        loadProjectsRPC();
+        document.getElementById('highScoreVal').innerText = highScore;
+        if(window.ethereum) {
+            const p = new ethers.providers.Web3Provider(window.ethereum);
+            p.listAccounts().then(acc => { if(acc.length>0) connectWallet(true); });
+        }
+    };
+
+    function resize() {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const availableW = w - 20;
+        const availableH = h - 160;
+        tileCountX = Math.floor(availableW / gridSize);
+        tileCountY = Math.floor(availableH / gridSize);
+        canvas.width = tileCountX * gridSize;
+        canvas.height = tileCountY * gridSize;
+    }
+
+    // --- TOGGLES ---
+    function toggleWall() { wallCollision = !wallCollision; updateBtn('wallBtn', wallCollision, "🚧 Wall"); }
+    function toggleMaze() { mazeMode = !mazeMode; updateBtn('mazeBtn', mazeMode, "🧱 Obstacles"); }
+    function updateBtn(id, s, t) {
+        const b = document.getElementById(id);
+        b.innerHTML = `<span>${t}</span> <span>${s?'ON':'OFF'}</span>`;
+        if(s) b.classList.add('active'); else b.classList.remove('active');
+    }
+
+    // --- GAME LOOP ---
+    function startGame() {
+        document.getElementById('startScreen').classList.add('hidden');
+        document.getElementById('gameOverScreen').classList.add('hidden');
+        document.getElementById('settingsBtn').style.display = 'none';
+        if(window.innerWidth < 800) document.getElementById('dpad').style.display = 'block';
+
+        const midX = Math.floor(tileCountX/2);
+        const midY = Math.floor(tileCountY/2);
+        snake = [{x: midX, y: midY}, {x: midX-1, y: midY}, {x: midX-2, y: midY}];
+        velocity = { x: 1, y: 0 }; 
+        nextVelocity = { x: 1, y: 0 };
+        
+        score = 0; items = []; particles = []; obstacles = [];
+        
+        if(mazeMode) generateObstacles();
+        spawnItem('apple');
+        document.getElementById('scoreDisplay').innerText = score;
+        
+        isRunning = true;
+        clearInterval(gameLoopId);
+        gameLoopId = setInterval(update, gameSpeed);
+    }
+
+    function update() {
+        if(!isRunning) return;
+
+        velocity = nextVelocity;
+        let head = { x: snake[0].x + velocity.x, y: snake[0].y + velocity.y };
+
+        // 1. Walls
+        if (wallCollision) {
+            if (head.x < 0 || head.x >= tileCountX || head.y < 0 || head.y >= tileCountY) { gameOver(); return; }
+        } else {
+            if (head.x < 0) head.x = tileCountX - 1;
+            if (head.x >= tileCountX) head.x = 0;
+            if (head.y < 0) head.y = tileCountY - 1;
+            if (head.y >= tileCountY) head.y = 0;
+        }
+
+        // 2. Self & Obstacles
+        for(let s of snake) if(head.x === s.x && head.y === s.y) { gameOver(); return; }
+        for(let o of obstacles) if(head.x === o.x && head.y === o.y) { gameOver(); return; }
+
+        snake.unshift(head);
+
+        // 3. ITEMS (SAFE REVERSE LOOP)
+        let ate = false;
+        for (let i = items.length - 1; i >= 0; i--) {
+            let item = items[i];
+            item.life--;
+
+            if (head.x === item.x && head.y === item.y) {
+                handleItem(item);
+                createParticles(head.x, head.y, item.color);
+                items.splice(i, 1);
+                ate = true;
+                break; 
+            }
+            
+            if (item.life <= 0) {
+                items.splice(i, 1);
+                if(items.length === 0) spawnItem('apple'); 
+            }
+        }
+
+        if(!ate) snake.pop();
+        else {
+            spawnItem(); 
+            if(Math.random() < 0.3) spawnItem(); 
+        }
+
+        draw();
+    }
+
+    function draw() {
+        ctx.fillStyle = '#1a1b26'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Grid
+        ctx.strokeStyle = 'rgba(122, 162, 247, 0.1)'; ctx.lineWidth = 1;
+        for(let x=0; x<=canvas.width; x+=gridSize) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke(); }
+        for(let y=0; y<=canvas.height; y+=gridSize) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke(); }
+
+        // Obstacles
+        ctx.fillStyle = '#4b4e6d';
+        for(let o of obstacles) {
+             ctx.fillRect(o.x*gridSize, o.y*gridSize, gridSize, gridSize);
+             ctx.strokeStyle = '#6c5ce7'; ctx.strokeRect(o.x*gridSize, o.y*gridSize, gridSize, gridSize);
+        }
+
+        // Items
+        for(let item of items) {
+            if(item.life < 25 && item.life % 5 === 0) continue; 
+            drawGlowingCircle(item.x, item.y, item.color, 15);
+            ctx.fillStyle = '#fff'; ctx.font = (gridSize-4)+'px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            let icon = item.type === 'apple' ? '🍎' : (item.type==='gem' ? '💎' : '⚡');
+            if(item.life < 50) { 
+                ctx.fillStyle = item.color; ctx.font = '10px Arial';
+                ctx.fillText(Math.ceil(item.life/10), item.x*gridSize+gridSize/2, item.y*gridSize-5);
+            }
+            ctx.font = (gridSize-4)+'px Arial';
+            ctx.fillText(icon, item.x*gridSize+gridSize/2, item.y*gridSize+gridSize/2+2);
+        }
+
+        // Snake
+        for(let i=0; i<snake.length; i++) {
+            let s = snake[i];
+            let color = i === 0 ? '#9ece6a' : '#73daca'; 
+            drawRoundedRect(s.x, s.y, color, i===0 ? 10 : 0);
+            if(i===0) { 
+                ctx.fillStyle = '#1a1b26';
+                let sX = s.x*gridSize; let sY = s.y*gridSize; let sz=gridSize;
+                if(velocity.x===1){ctx.fillRect(sX+sz*0.6,sY+sz*0.2,3,3);ctx.fillRect(sX+sz*0.6,sY+sz*0.6,3,3);}
+                else if(velocity.x===-1){ctx.fillRect(sX+sz*0.2,sY+sz*0.2,3,3);ctx.fillRect(sX+sz*0.2,sY+sz*0.6,3,3);}
+                else if(velocity.y===-1){ctx.fillRect(sX+sz*0.2,sY+sz*0.2,3,3);ctx.fillRect(sX+sz*0.6,sY+sz*0.2,3,3);}
+                else {ctx.fillRect(sX+sz*0.2,sY+sz*0.6,3,3);ctx.fillRect(sX+sz*0.6,sY+sz*0.6,3,3);}
+            }
+        }
+        updateParticles();
+    }
+
+    // --- UTILS ---
+    function generateObstacles() {
+        obstacles = [];
+        for(let i=0; i<10; i++) {
+            let ox = Math.floor(Math.random() * (tileCountX - 2)) + 1;
+            let oy = Math.floor(Math.random() * (tileCountY - 2)) + 1;
+            if(Math.abs(ox - Math.floor(tileCountX/2)) < 5 && Math.abs(oy - Math.floor(tileCountY/2)) < 5) { i--; continue; }
+            obstacles.push({x: ox, y: oy});
+        }
+    }
+    function drawRoundedRect(x, y, color, glow) { ctx.shadowBlur=glow; ctx.shadowColor=color; ctx.fillStyle=color; ctx.beginPath(); ctx.roundRect(x*gridSize+1, y*gridSize+1, gridSize-2, gridSize-2, 4); ctx.fill(); ctx.shadowBlur=0; }
+    function drawGlowingCircle(x, y, color, glow) { ctx.shadowBlur=glow; ctx.shadowColor=color; ctx.fillStyle='rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.arc(x*gridSize+gridSize/2, y*gridSize+gridSize/2, gridSize/2-2, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur=0; }
+    function createParticles(x, y, color) { for(let i=0; i<5; i++) particles.push({x: x*gridSize+gridSize/2, y: y*gridSize+gridSize/2, vx: (Math.random()-0.5)*gridSize, vy: (Math.random()-0.5)*gridSize, life: 1.0, color: color}); }
+    function updateParticles() { for(let i=particles.length-1; i>=0; i--) { let p = particles[i]; p.x+=p.vx*0.2; p.y+=p.vy*0.2; p.life-=0.05; ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1.0; if(p.life<=0) particles.splice(i, 1); } }
+    function spawnItem(type) { if(!type) { let r=Math.random(); type = r<0.1?'coin':(r<0.3?'gem':'apple'); } let life = type==='coin'?60:(type==='gem'?90:150); let item = { x: Math.floor(Math.random()*tileCountX), y: Math.floor(Math.random()*tileCountY), type: type, life: life, color: type==='apple'?'#f7768e':(type==='gem'?'#7aa2f7':'#ffd700') }; for(let s of snake) if(s.x===item.x && s.y===item.y) return spawnItem(type); for(let o of obstacles) if(o.x===item.x && o.y===item.y) return spawnItem(type); items.push(item); }
+    function handleItem(item) { if(item.type==='apple'){ score+=10; playSFX('eat'); vibrate(20); } else if(item.type==='gem'){ score+=50; playSFX('bonus'); vibrate([30,50,30]); } else { score+=100; playSFX('bonus'); vibrate(100); } document.getElementById('scoreDisplay').innerText = score; }
+    function turn(dir) { if(dir==='UP' && velocity.y!==1) nextVelocity={x:0, y:-1}; if(dir==='DOWN' && velocity.y!==-1) nextVelocity={x:0, y:1}; if(dir==='LEFT' && velocity.x!==1) nextVelocity={x:-1, y:0}; if(dir==='RIGHT' && velocity.x!==-1) nextVelocity={x:1, y:0}; }
+    
+    function gameOver() {
+        isRunning = false; clearInterval(gameLoopId);
+        playSFX('die'); vibrate([100,50,100]);
+        if(score>highScore){ highScore=score; localStorage.setItem('snake_highscore', highScore); document.getElementById('highScoreVal').innerText=highScore; }
+        
+        document.getElementById('dpad').style.display = 'none';
+        document.getElementById('settingsBtn').style.display = 'flex';
+        document.getElementById('gameOverScreen').classList.remove('hidden');
+        document.getElementById('finalScore').innerText = score;
+        
+        // Reset status box to hidden, then try to load if signed in
+        document.getElementById('userStatusBox').classList.add('hidden');
+        if(signer && contract) loadUserStats(); 
+    }
+    function restartGame() { document.getElementById('gameOverScreen').classList.add('hidden'); startGame(); }
+    
+    // Settings
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTone(f,t,d) { if(!soundEnabled || audioCtx.state === 'suspended') return; try{const o=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.type=t; o.frequency.setValueAtTime(f, audioCtx.currentTime); g.gain.setValueAtTime(0.1, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+d); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+d);}catch(e){} }
+    function playSFX(e) { if(e==='eat')playTone(600,'sine',0.1); if(e==='bonus')playTone(800,'square',0.2); if(e==='die'){playTone(150,'sawtooth',0.5);playTone(100,'sawtooth',0.5);} }
+    function vibrate(p) { if(vibrationEnabled&&navigator.vibrate)navigator.vibrate(p); }
+    function openSettings() { document.getElementById('settingsModal').classList.remove('hidden'); }
+    function closeSettings() { document.getElementById('settingsModal').classList.add('hidden'); }
+    function toggleSound() { soundEnabled=!soundEnabled; document.getElementById('sndToggle').innerText=soundEnabled?"ON":"OFF"; }
+    function toggleVib() { vibrationEnabled=!vibrationEnabled; document.getElementById('vibToggle').innerText=vibrationEnabled?"ON":"OFF"; }
+    function toggleMode() { wallCollision=!wallCollision; const b=document.getElementById('modeBtn'); b.innerText=wallCollision?"🚧 WALLS: ON":"🔄 WALLS: OFF"; b.style.color=wallCollision?"#ff9f43":"#9ece6a"; }
+    function toggleMaze() { mazeMode=!mazeMode; const b=document.getElementById('mazeBtn'); b.innerText=mazeMode?"🧱 Obstacles: ON":"🧱 Obstacles: OFF"; b.style.color=mazeMode?"#ff9f43":"#9ece6a"; }
+
+    // Wallet
+    async function handleWallet() {
+        if (userAddress) {
+            userAddress = null; signer = null;
+            document.getElementById('walletAddr').innerText = "Guest Mode";
+            const btn = document.getElementById('connectBtn'); // StartScreen btn
+            btn.innerText = "🔌 CONNECT WALLET";
+            btn.className = "btn-primary";
+            // Hide play ranked button
+            document.getElementById('playBtn').innerText = "🎮 PLAY GUEST";
+            document.getElementById('userStatusBox').classList.add('hidden');
+            location.reload(); // Clean reset
+        } else {
+            connectWallet();
+        }
+    }
+
+    async function connectWallet(silent=false) {
+        if(!window.ethereum) { if(!silent) alert("Install Wallet"); return; }
+        const startBtn = document.getElementById('connectBtn');
+        try {
+            if(!silent) startBtn.innerText = "⏳...";
+            
+            provider = new ethers.providers.Web3Provider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            signer = provider.getSigner();
+            userAddress = await signer.getAddress();
+            
+            try { await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x79a' }] }); } catch(e){ console.warn(e); }
+            
+            document.getElementById('walletAddr').innerText = userAddress.substring(0,6)+"...";
+            startBtn.innerText = "❌ DISCONNECT";
+            startBtn.className = "btn-danger"; 
+            
+            // Update Play Button
+            const playBtn = document.getElementById('playBtn');
+            if(playBtn) { playBtn.innerText = "🎮 START RANKED"; playBtn.className = "btn-green"; }
+            
+            contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+            loadUserStats();
+        } catch(e) { 
+            console.error("Wallet Error:", e);
+            if(!silent) {
+                alert("Connection Failed: " + (e.message || "Unknown error"));
+                startBtn.innerText = "🔌 CONNECT WALLET";
+                startBtn.className = "btn-primary";
+            }
+        }
+    }
+    
+    async function loadUserStats() {
+        if(!contract || !userAddress) return;
+        try {
+            const data = await contract.getUserAccumulation(userAddress);
+            const cents = data.cents.toNumber();
+            const tickets = data.tickets.toNumber();
+            userCurrentCents = cents; 
+            
+            document.getElementById('userTickets').innerText = tickets;
+            document.getElementById('userCents').innerText = (cents % 100) + "¢";
+            
+            const needed = 100 - (cents % 100);
+            document.getElementById('userNextTicket').innerText = needed + "¢";
+            
+            updateCost(document.getElementById('donationSlider').value);
+            document.getElementById('userStatusBox').classList.remove('hidden');
+        } catch(e){
+            console.error("Load stats error:", e);
+        }
+    }
+
+    async function fetchPrice() { try{ const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'); const d=await r.json(); ethPrice=d.ethereum.usd; }catch(e){} updateCost(1); }
+    async function loadProjectsRPC() { try{ const p=new ethers.providers.JsonRpcProvider(RPC_URL); const c=new ethers.Contract(CONTRACT_ADDRESS, ABI, p); const count=await c.getProjectCount(); const s=document.getElementById('projectSelect'); s.innerHTML=""; for(let i=0;i<count;i++){ const pr=await c.getProject(i); if(pr[5]){ const o=document.createElement('option'); o.value=i; o.text=pr[0]; s.appendChild(o); } } }catch(e){} }
+    
+    function updateCost(usd) { 
+        document.getElementById('usdAmount').innerText="$"+usd; 
+        document.getElementById('ethCost').innerText=(usd/ethPrice).toFixed(6)+" ETH";
+        const warning = document.getElementById('accWarning');
+        const currentRemainder = userCurrentCents % 100;
+        const payingCents = Math.floor(usd * 100);
+        const newTotal = currentRemainder + payingCents;
+        
+        if(newTotal < 100) {
+            const needed = 100 - newTotal;
+            warning.style.display = 'block';
+            warning.innerText = `⚠️ +${payingCents}¢ Added. Need ${needed}¢ more.`;
+        } else {
+            // Ticket achieved
+            warning.style.display = 'none';
+        }
+    }
+    
+    async function donate() {
+        if(!signer){ await connectWallet(); if(!signer) return; }
+        const usd=document.getElementById('donationSlider').value;
+        const wei=ethers.utils.parseEther((usd/ethPrice).toFixed(18));
+        const pid=document.getElementById('projectSelect').value;
+        const cents = Math.floor(usd * 100);
+        try {
+            const btn=document.getElementById('payBtn'); btn.innerText="⏳ Signing..."; btn.disabled=true;
+            const tx=await contract.donate(pid, true, "HomaSnake", cents, {value:wei});
+            await tx.wait(); alert("Saved! 🐍"); location.reload();
+        } catch(e){ alert("Error: "+e.message); document.getElementById('payBtn').innerText="💾 SAVE SCORE & DONATE"; document.getElementById('payBtn').disabled=false; }
+    }
+
+    document.addEventListener('keydown', e=>{ if(e.key==='ArrowUp')turn('UP'); if(e.key==='ArrowDown')turn('DOWN'); if(e.key==='ArrowLeft')turn('LEFT'); if(e.key==='ArrowRight')turn('RIGHT'); });
+</script>
+</body>
+</html>
